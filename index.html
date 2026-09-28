@@ -218,6 +218,9 @@
   .ws-browse-item { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); cursor: pointer; }
   .ws-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(45,212,191,0.12); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; color: var(--accent); }
   .ws-row { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); }
+  .ws-row.dragging { opacity: 0.4; }
+  .ws-drag-handle { cursor: grab; display: flex; flex: 0 0 auto; }
+  .ws-drag-handle:active { cursor: grabbing; }
   .ws-arrows { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
   .ws-arrow-btn { width: 26px; height: 18px; border-radius: 5px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .ws-arrow-btn:disabled { color: var(--text-faint); cursor: not-allowed; }
@@ -287,7 +290,8 @@
     dragActive: false,
     wsManageMode: false,
     modal: null,          // null | {type:'form', id:string|null, draft?:string} | {type:'delete', id:string}
-    modalError: null
+    modalError: null,
+    dragId: null           // id of the workshop currently being drag-reordered (desktop mouse drag)
   };
 
   function esc(s) {
@@ -646,8 +650,8 @@
       var stats = workshopStats(w.name);
       if (isEdit) {
         return (
-          '<div class="ws-row">' +
-            svgDragDots() +
+          '<div class="ws-row' + (state.dragId === w.id ? ' dragging' : '') + '" data-id="' + w.id + '">' +
+            '<span class="ws-drag-handle" draggable="true" data-drag-handle aria-label="拖曳排序">' + svgDragDots() + '</span>' +
             '<div class="ws-arrows">' +
               '<button class="ws-arrow-btn" data-action="ws-move-up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="上移">' + svgChevronUp() + '</button>' +
               '<button class="ws-arrow-btn" data-action="ws-move-down" data-id="' + w.id + '"' + (i === WORKSHOPS.length - 1 ? ' disabled' : '') + ' aria-label="下移">' + svgChevronDown() + '</button>' +
@@ -704,8 +708,8 @@
       var stats = workshopStats(w.name);
       if (isEdit) {
         return (
-          '<div class="ws-row" style="padding:14px 16px;">' +
-            svgDragDots() +
+          '<div class="ws-row' + (state.dragId === w.id ? ' dragging' : '') + '" style="padding:14px 16px;" data-id="' + w.id + '">' +
+            '<span class="ws-drag-handle" draggable="true" data-drag-handle aria-label="拖曳排序">' + svgDragDots() + '</span>' +
             '<div class="ws-icon">' + svgWorkshops() + '</div>' +
             '<div style="flex:1;">' +
               '<div style="font-size:16px;font-weight:600;">' + esc(w.name) + '</div>' +
@@ -769,11 +773,11 @@
               '<div class="modal-title">' + (isEditing ? '編輯工坊' : '新增工坊') + '</div>' +
               '<button class="modal-close" data-action="modal-cancel" aria-label="關閉">' + svgClose() + '</button>' +
             '</div>' +
-            '<label class="field-label">工坊名稱</label>' +
+            '<label class="field-label">公會名稱（可自訂別名）</label>' +
             '<input type="text" id="ws-name-input" class="modal-input' + (state.modalError ? ' error' : '') + '" value="' + esc(prefill) + '" maxlength="20">' +
             (state.modalError
               ? '<div class="modal-error-text">' + esc(state.modalError) + '</div>'
-              : '<div class="modal-hint" style="margin-bottom:22px;">工坊名稱需在公會內唯一，用來在潛艇列表中辨識所屬工坊</div>') +
+              : '<div class="modal-hint" style="margin-bottom:22px;">填公會正式名稱，或自己取一個好記的別名——用來在潛艇列表裡辨識這是哪個公會的紀錄，同一份清單裡不要重複比較好分辨</div>') +
             '<div class="modal-actions">' +
               '<button class="btn-secondary" data-action="modal-cancel">取消</button>' +
               '<button class="btn-primary-modal" data-action="modal-save" data-id="' + (isEditing ? state.modal.id : '') + '">' + (isEditing ? '儲存' : '新增') + '</button>' +
@@ -919,7 +923,43 @@
     }
   });
 
+  // ---------- Workshop reorder via drag handle (desktop mouse drag) ----------
+  document.addEventListener('dragstart', function (e) {
+    var handle = e.target.closest('[data-drag-handle]');
+    if (!handle) return;
+    var row = handle.closest('.ws-row');
+    if (!row) return;
+    state.dragId = row.getAttribute('data-id');
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', state.dragId); } catch (err) {}
+    render();
+  });
+
+  document.addEventListener('dragend', function () {
+    if (state.dragId !== null) { state.dragId = null; render(); }
+  });
+
+  document.addEventListener('drop', function (e) {
+    var wsRow = e.target.closest('.ws-row[data-id]');
+    if (wsRow && state.dragId !== null) e.preventDefault();
+  });
+
   document.addEventListener('dragover', function (e) {
+    var wsRow = e.target.closest('.ws-row[data-id]');
+    if (wsRow && state.dragId !== null) {
+      e.preventDefault();
+      var overId = wsRow.getAttribute('data-id');
+      if (overId !== state.dragId) {
+        var ids = WORKSHOPS.map(function (w) { return w.id; });
+        var fromIdx = ids.indexOf(state.dragId);
+        var toIdx = ids.indexOf(overId);
+        if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+          var moved = WORKSHOPS.splice(fromIdx, 1)[0];
+          WORKSHOPS.splice(toIdx, 0, moved);
+          render();
+        }
+      }
+      return;
+    }
     var dz = e.target.closest('[data-role="dropzone-desktop"]');
     if (!dz) return;
     e.preventDefault();
