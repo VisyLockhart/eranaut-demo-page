@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aequor Eranos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #2dd4bf;
+    --accent-dark: #0e7490;
+    --amber: #fbbf24;
+    --bg: #070a14;
+    --bg-elevated: #0f1526;
+    --bg-elevated-2: #0d1220;
+    --border: rgba(148,163,184,0.10);
+    --border-strong: rgba(148,163,184,0.16);
+    --text: #e6eaf5;
+    --text-muted: #8b93ab;
+    --text-dim: #6b7594;
+    --text-faint: #4a5273;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body {
+    font-family: 'Sora', sans-serif;
+    color: var(--text);
+    background: radial-gradient(120% 70% at 15% -10%, #10213a 0%, #070a14 55%), #070a14;
+    min-height: 100vh;
+  }
+  button, select, input { font-family: inherit; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  a { color: inherit; text-decoration: none; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.75); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+  .pulse-dot { animation: pulse-dot 2.2s ease-in-out infinite; }
+  .pulse-ring { animation: pulse-ring 2.2s ease-out infinite; }
+
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 9px; flex: 0 0 auto;
+    background: linear-gradient(155deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: #1a2138;
+    border: 1px solid var(--border-strong); display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    flex: 0 0 auto;
+  }
+
+  .icon-btn {
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--text-dim); border-radius: 50%;
+  }
+  .icon-btn.active { background: var(--accent); color: #04121a; }
+
+  .pill-toggle {
+    display: flex; gap: 4px; background: var(--bg-elevated-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px;
+  }
+
+  .dropzone {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    width: 100%; border: 2px dashed rgba(148,163,184,0.22); border-radius: 16px;
+    background: var(--bg-elevated-2); cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .dropzone.drag { border-color: var(--accent); background: rgba(45,212,191,0.06); }
+  .dropzone.has-file { border-color: rgba(45,212,191,0.45); background: rgba(45,212,191,0.05); }
+  .dropzone input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+  /* ---------- Mobile shell ---------- */
+  .mobile-shell {
+    display: flex; flex-direction: column; max-width: 480px; margin: 0 auto;
+    min-height: 100vh;
+  }
+  .m-header {
+    flex: 0 0 auto; padding: 20px 18px 14px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .m-stats { flex: 0 0 auto; padding: 12px 18px; display: flex; gap: 10px; }
+  .m-stat { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+  .m-stat.ready { flex: 1.3; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.30); }
+  .m-stat .num { font-size: 17px; font-weight: 700; }
+  .m-stat .label { font-size: 10.5px; color: var(--text-dim); margin-top: 1px; }
+  .m-stat.ready .num { color: var(--amber); }
+  .m-stat.ready .label { color: #d8a94c; }
+
+  .pager { flex: 0 0 auto; padding: 2px 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .pager-row { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; }
+  .pager-btn { width: 34px; height: 34px; border-radius: 10px; background: var(--bg-elevated); border: 1px solid rgba(148,163,184,0.12); color: var(--text-muted); }
+  .pager-label { flex-grow: 1; text-align: center; font-size: 14px; font-weight: 700; }
+  .pager-dots { display: flex; align-items: center; gap: 5px; }
+  .dot { height: 5px; border-radius: 3px; background: #2a3150; width: 5px; }
+  .dot.active { width: 16px; background: var(--accent); }
+
+  .m-viewswitch { flex: 0 0 auto; padding: 0 18px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .sort-label { font-size: 10.5px; color: var(--text-faint); }
+
+  .m-list { flex-grow: 1; overflow-y: auto; padding: 0 12px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin-bottom: 1px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.08); }
+  .row.ready { background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.22); }
+  .row-dot-wrap { width: 9px; height: 9px; flex: 0 0 auto; position: relative; display: flex; align-items: center; justify-content: center; }
+  .row-dot { width: 9px; height: 9px; border-radius: 50%; position: relative; z-index: 1; }
+  .row-ring { position: absolute; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid; }
+  .row-main { flex-grow: 1; min-width: 0; }
+  .row-sub { font-size: 14.5px; font-weight: 600; line-height: 1.25; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-ws { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .row-right { text-align: right; flex: 0 0 auto; }
+  .row-time { font-size: 14.5px; font-weight: 600; line-height: 1.25; }
+  .row-status { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+  .m-cards { flex-grow: 1; overflow-y: auto; padding: 0 18px; }
+  .card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .card.ready { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.30); }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .card-ws { font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.03em; }
+  .status-pill { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(45,212,191,0.10); color: var(--accent); }
+  .status-pill.ready { background: rgba(251,191,36,0.14); color: var(--amber); }
+  .pill-dot-wrap { width: 7px; height: 7px; position: relative; display: flex; align-items: center; justify-content: center; }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; position: relative; z-index: 1; }
+  .pill-ring { position: absolute; width: 6px; height: 6px; border-radius: 50%; border: 1.3px solid; }
+  .card-sub { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+  .card-bottom { display: flex; align-items: baseline; justify-content: space-between; }
+  .card-time { font-size: 22px; font-weight: 600; }
+  .card-hint { font-size: 10.5px; color: var(--text-faint); }
+
+  .m-nav { flex: 0 0 auto; display: flex; align-items: stretch; border-top: 1px solid var(--border); background: #0a0e1c; }
+  .nav-item { flex: 1; padding: 9px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #5b6488; cursor: pointer; }
+  .nav-item.active { color: var(--accent); }
+  .nav-item span { font-size: 10px; font-weight: 500; }
+  .nav-item.active span { font-weight: 600; }
+  .nav-upload { position: relative; }
+  .nav-upload-fab {
+    position: absolute; top: -18px; width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(155deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(45,212,191,0.35);
+  }
+  .nav-upload span { margin-top: 24px; }
+
+  .m-upload-body { flex-grow: 1; overflow-y: auto; padding: 20px 18px; }
+  .field-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .field-select { width: 100%; padding: 11px 14px; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--text); font-size: 13.5px; }
+  .divider-row { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+  .divider-line { flex-grow: 1; height: 1px; background: var(--border-strong); }
+  .camera-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 11px; background: var(--bg-elevated); border: 1px solid var(--border-strong); cursor: pointer; }
+  .primary-btn { padding: 13px; border-radius: 10px; border: none; background: linear-gradient(155deg, var(--accent), var(--accent-dark)); color: #04121a; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
+  .ghost-btn { padding: 11px; border-radius: 10px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; }
+
+  /* ---------- Desktop shell ---------- */
+  .desktop-shell { display: none; }
+  .d-wrap { max-width: 1280px; margin: 0 auto; display: flex; min-height: 100vh; }
+  .d-sidebar { width: 232px; flex: 0 0 auto; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 22px 14px; }
+  .d-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px 22px; }
+  .d-brand-name { font-size: 13.5px; font-weight: 700; letter-spacing: 0.05em; }
+  .d-brand-sub { font-size: 10.5px; color: var(--text-dim); margin-top: 1px; }
+  .d-nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 8px; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: 500; }
+  .d-nav-item.active { background: rgba(45,212,191,0.10); color: var(--accent); font-weight: 600; }
+  .d-user { display: flex; align-items: center; gap: 9px; padding: 10px; border-radius: 10px; background: var(--bg-elevated); border: 1px solid var(--border); }
+  .d-user-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d-user-sub { font-size: 10.5px; color: var(--text-dim); }
+
+  .d-main { flex-grow: 1; padding: 26px 32px; overflow-y: auto; min-width: 0; }
+  .d-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 16px; flex-wrap: wrap; }
+  .d-title { font-size: 20px; font-weight: 700; }
+  .d-subtitle { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+  .d-pager { display: flex; align-items: center; gap: 4px; background: var(--bg-elevated-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 6px; }
+  .d-pager-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .d-pager-label { min-width: 88px; text-align: center; font-size: 13px; font-weight: 700; }
+
+  .d-stats { display: flex; gap: 14px; margin-bottom: 22px; }
+  .d-stat { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
+  .d-stat.ready { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.30); }
+  .d-stat.wide { flex: 1.6; }
+  .d-stat .num { font-size: 24px; font-weight: 700; }
+  .d-stat .label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .d-stat.ready .num { color: var(--amber); }
+  .d-stat.ready .label { color: #d8a94c; }
+
+  .upload-cta { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 9px; background: linear-gradient(155deg, var(--accent), var(--accent-dark)); color: #04121a; font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
+
+  .table-wrap { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-head, .table-row {
+    display: grid; grid-template-columns: 28px 1.6fr 1.3fr 1fr 1.1fr 1fr; gap: 8px; align-items: center; padding: 11px 16px;
+  }
+  .table-head { padding: 10px 16px; background: var(--bg-elevated-2); font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; }
+  .table-row { border-top: 1px solid rgba(148,163,184,0.06); }
+  .table-row.ready { background: rgba(251,191,36,0.06); }
+  .t-sub { font-size: 13.5px; font-weight: 600; }
+  .t-ws { font-size: 12.5px; color: var(--text-muted); }
+  .t-status { font-size: 12.5px; color: var(--text-muted); }
+  .t-status.ready { color: #d8a94c; }
+  .t-time { font-size: 13px; font-weight: 600; }
+  .t-eta { font-size: 12.5px; color: var(--text-dim); }
+
+  .card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .d-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .d-card.ready { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.30); }
+  .d-card-pos { font-size: 10.5px; color: var(--text-faint); }
+  .d-card-sub { font-size: 16px; font-weight: 700; margin: 2px 0; }
+  .d-card-ws { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+  .d-card-bottom { border-top: 1px solid rgba(148,163,184,0.08); padding-top: 10px; display: flex; align-items: baseline; justify-content: space-between; }
+  .d-card-time { font-size: 19px; font-weight: 600; }
+  .d-card-eta { font-size: 11px; color: var(--text-faint); }
+
+  .d-upload-wrap { max-width: 720px; }
+  .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 12.5px; margin-bottom: 16px; cursor: pointer; }
+
+  @media (min-width: 768px) {
+    .mobile-shell { display: none; }
+    .desktop-shell { display: block; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var ACCENT = '#2dd4bf';
+  var AMBER = '#fbbf24';
+  var WORKSHOP_ORDER = ['貝殼工坊', '鋼鐵之心', '珊瑚礁工坊'];
+  var PAGER_ITEMS = ['全部'].concat(WORKSHOP_ORDER);
+
+  var RAW = [
+    { sub: '深海一號', wsName: '貝殼工坊', pos: '位置 1', time: '可收艇', shortTime: '可收艇', eta: '－', shortEta: '－', label: '探索完成', hint: '前往收艇', status: 'ready' },
+    { sub: '探索號-3', wsName: '鋼鐵之心', pos: '位置 3', time: '12 分', shortTime: '12分', eta: '09/28 16:54', shortEta: '16:54', label: '探索中', hint: '約 16:54', status: 'exploring' },
+    { sub: '深潛者-2', wsName: '貝殼工坊', pos: '位置 2', time: '47 分', shortTime: '47分', eta: '09/28 17:29', shortEta: '17:29', label: '探索中', hint: '約 17:29', status: 'exploring' },
+    { sub: '探索號-1', wsName: '鋼鐵之心', pos: '位置 1', time: '2 時 14 分', shortTime: '2時14分', eta: '09/28 18:56', shortEta: '18:56', label: '探索中', hint: '約 18:56', status: 'exploring' },
+    { sub: '深海二號', wsName: '貝殼工坊', pos: '位置 3', time: '3 時 50 分', shortTime: '3時50分', eta: '09/28 20:32', shortEta: '20:32', label: '探索中', hint: '約 20:32', status: 'exploring' },
+    { sub: '潛水艇-4', wsName: '珊瑚礁工坊', pos: '位置 4', time: '5 時 22 分', shortTime: '5時22分', eta: '09/28 22:04', shortEta: '22:04', label: '探索中', hint: '約 22:04', status: 'exploring' },
+    { sub: '探索號-2', wsName: '鋼鐵之心', pos: '位置 2', time: '8 時 05 分', shortTime: '8時05分', eta: '09/29 00:47', shortEta: '明00:47', label: '探索中', hint: '明 00:47', status: 'exploring' },
+    { sub: '深潛者-1', wsName: '珊瑚礁工坊', pos: '位置 1', time: '11 時 40 分', shortTime: '11時40分', eta: '09/29 04:22', shortEta: '明04:22', label: '探索中', hint: '明 04:22', status: 'exploring' },
+    { sub: '潛水艇-2', wsName: '珊瑚礁工坊', pos: '位置 2', time: '18 時 33 分', shortTime: '18時33分', eta: '09/29 11:15', shortEta: '明11:15', label: '探索中', hint: '明 11:15', status: 'exploring' }
+  ];
+
+  var state = {
+    view: 'list',        // 'list' | 'card'
+    wsIndex: 0,           // index into PAGER_ITEMS
+    route: 'overview',    // 'overview' | 'upload'
+    fileName: null,
+    dragActive: false
+  };
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function filteredItems() {
+    if (state.wsIndex === 0) return RAW;
+    var name = PAGER_ITEMS[state.wsIndex];
+    return RAW.filter(function (r) { return r.wsName === name; });
+  }
+
+  function svgChevronLeft() {
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 L9 12 L15 6"></path></svg>';
+  }
+  function svgChevronRight() {
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6 L15 12 L9 18"></path></svg>';
+  }
+  function svgListIcon() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>';
+  }
+  function svgGridIcon() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.5"></rect><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.5"></rect><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5"></rect><rect x="13" y="13" width="7.5" height="7.5" rx="1.5"></rect></svg>';
+  }
+  function svgLogo() {
+    return '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#04121a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="8" ry="5.5"></ellipse><path d="M4 13 L1.5 13"></path><path d="M20 13 L22.5 13"></path><path d="M9 8.5 V5 a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 v3.5"></path><circle cx="12" cy="13" r="1.6"></circle></svg>';
+  }
+  function svgHome() {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11"></path><path d="M5 10 V20 H19 V10"></path></svg>';
+  }
+  function svgWorkshops() {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"></path><path d="M3 12 L12 17 L21 12"></path><path d="M3 16 L12 21 L21 16"></path></svg>';
+  }
+  function svgUpload() {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8 h3 l2 -2.5 h6 l2 2.5 h3 v11 H4 Z"></path><circle cx="12" cy="13.5" r="3.2"></circle></svg>';
+  }
+  function svgUser() {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20 c0 -4 3.1 -6.5 7 -6.5 s7 2.5 7 6.5"></path></svg>';
+  }
+  function svgSettings() {
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9c.16.62.67 1.11 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"></path></svg>';
+  }
+  function svgCheck() {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + ACCENT + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 L9 17 L4 12"></path></svg>';
+  }
+  function svgUploadCloud(color) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 V4"></path><path d="M7 9 L12 4 L17 9"></path><path d="M4 16 v3 a2 2 0 0 0 2 2 h12 a2 2 0 0 0 2 -2 v-3"></path></svg>';
+  }
+
+  function pagerDots() {
+    return PAGER_ITEMS.map(function (_, i) {
+      return '<span class="dot' + (i === state.wsIndex ? ' active' : '') + '"></span>';
+    }).join('');
+  }
+
+  function statsBlock(cls) {
+    return (
+      '<div class="' + cls + '">' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">3</div><div class="label">工坊</div></div>' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">9</div><div class="label">潛水艇</div></div>' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat ready' : 'd-stat ready') + '"><div class="num mono">1</div><div class="label">艘待收艇</div></div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Mobile overview ----------
+  function renderMobileOverview() {
+    var items = filteredItems();
+    var listRows = items.map(function (r) {
+      var isReady = r.status === 'ready';
+      var color = isReady ? AMBER : ACCENT;
+      return (
+        '<div class="row' + (isReady ? ' ready' : '') + '">' +
+          '<div class="row-dot-wrap">' +
+            (r.status === 'exploring' ? '<span class="row-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
+            '<span class="row-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="background:' + color + '"></span>' +
+          '</div>' +
+          '<div class="row-main"><div class="row-sub">' + esc(r.sub) + '</div><div class="row-ws">' + esc(r.wsName + ' · ' + r.pos) + '</div></div>' +
+          '<div class="row-right"><div class="row-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.time) + '</div><div class="row-status" style="color:' + (isReady ? '#d8a94c' : '') + '">' + esc(r.label) + '</div></div>' +
+        '</div>'
+      );
+    }).join('');
+
+    var cardItems = items.map(function (r) {
+      var isReady = r.status === 'ready';
+      var color = isReady ? AMBER : ACCENT;
+      return (
+        '<div class="card' + (isReady ? ' ready' : '') + '">' +
+          '<div class="card-top">' +
+            '<div class="card-ws">' + esc(r.wsName) + '</div>' +
+            '<div class="status-pill' + (isReady ? ' ready' : '') + '">' +
+              '<span class="pill-dot-wrap">' +
+                (r.status === 'exploring' ? '<span class="pill-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
+                '<span class="pill-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="background:' + color + '"></span>' +
+              '</span>' + esc(r.label) +
+            '</div>' +
+          '</div>' +
+          '<div class="card-sub">' + esc(r.sub) + '</div>' +
+          '<div class="card-bottom"><div class="card-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.shortTime) + '</div><div class="card-hint">' + esc(r.hint) + '</div></div>' +
+        '</div>'
+      );
+    }).join('');
+
+    var wsLabel = PAGER_ITEMS[state.wsIndex];
+    var isAll = state.wsIndex === 0;
+
+    return (
+      '<div class="mobile-shell">' +
+        '<div class="m-header">' +
+          '<div class="logo-mark">' + svgLogo() + '</div>' +
+          '<div style="flex-grow:1;min-width:0;"><div style="font-size:14px;font-weight:700;letter-spacing:0.06em;">AEQUOR ERANOS</div><div style="font-size:11px;color:var(--text-dim);margin-top:1px;">潛水艇總覽</div></div>' +
+          '<div class="avatar">VL</div>' +
+        '</div>' +
+        statsBlock('m-stats') +
+        '<div class="pager">' +
+          '<div class="pager-row">' +
+            '<button class="pager-btn" data-action="ws-prev">' + svgChevronLeft() + '</button>' +
+            '<div class="pager-label" style="color:' + (isAll ? 'var(--text)' : ACCENT) + '">' + esc(wsLabel) + '</div>' +
+            '<button class="pager-btn" data-action="ws-next">' + svgChevronRight() + '</button>' +
+          '</div>' +
+          '<div class="pager-dots">' + pagerDots() + '</div>' +
+        '</div>' +
+        '<div class="m-viewswitch">' +
+          '<div class="sort-label">' + (isAll ? '依返航時間排序' : esc(wsLabel) + ' · 依返航時間排序') + '</div>' +
+          '<div class="pill-toggle">' +
+            '<button class="icon-btn' + (state.view === 'list' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-list" aria-label="切換為列表檢視">' + svgListIcon() + '</button>' +
+            '<button class="icon-btn' + (state.view === 'card' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-card" aria-label="切換為卡片檢視">' + svgGridIcon() + '</button>' +
+          '</div>' +
+        '</div>' +
+        (state.view === 'list' ? '<div class="m-list">' + listRows + '</div>' : '<div class="m-cards">' + cardItems + '</div>') +
+        '<div class="m-nav">' +
+          '<div class="nav-item active" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
+          '<div class="nav-item">' + svgWorkshops() + '<span>工坊</span></div>' +
+          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item">' + svgUser() + '<span>我的</span></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Mobile upload ----------
+  function renderMobileUpload() {
+    var hasFile = !!state.fileName;
+    return (
+      '<div class="mobile-shell">' +
+        '<div class="m-header">' +
+          '<div class="pager-btn" style="width:32px;height:32px;border-radius:9px;cursor:pointer;" data-action="nav-overview">' + svgChevronLeft() + '</div>' +
+          '<div style="font-size:15px;font-weight:700;">上傳截圖</div>' +
+        '</div>' +
+        '<div class="m-upload-body">' +
+          '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:18px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
+          '<div style="margin-bottom:16px;">' +
+            '<label class="field-label">上傳到工坊</label>' +
+            '<select class="field-select">' + WORKSHOP_ORDER.map(function (w) { return '<option>' + esc(w) + '</option>'; }).join('') + '</select>' +
+          '</div>' +
+          '<label class="dropzone' + (hasFile ? ' has-file' : '') + '" style="height:180px;" data-role="dropzone-mobile">' +
+            '<input type="file" accept="image/*" data-role="file-input">' +
+            (hasFile
+              ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:13.5px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:11.5px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
+              : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud('#6b7594') + '</div><div style="font-size:14px;font-weight:600;">點擊選擇截圖</div><div style="font-size:11px;color:var(--text-faint);">支援 PNG／JPG</div></div>') +
+          '</label>' +
+          '<div class="divider-row"><div class="divider-line"></div><div style="font-size:11px;color:var(--text-faint);">或</div><div class="divider-line"></div></div>' +
+          '<label class="camera-btn">' +
+            '<input type="file" accept="image/*" capture="environment" data-role="file-input">' +
+            svgUpload() + '<span style="font-size:13.5px;font-weight:600;">拍照上傳</span>' +
+          '</label>' +
+          (hasFile
+            ? '<div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;"><button class="primary-btn">開始辨識</button><button class="ghost-btn" data-action="upload-reset">重新選擇</button></div>'
+            : '') +
+        '</div>' +
+        '<div class="m-nav">' +
+          '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
+          '<div class="nav-item">' + svgWorkshops() + '<span>工坊</span></div>' +
+          '<div class="nav-item nav-upload active"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item">' + svgUser() + '<span>我的</span></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Desktop sidebar ----------
+  function desktopSidebar() {
+    return (
+      '<div class="d-sidebar">' +
+        '<div class="d-brand"><div class="logo-mark">' + svgLogo() + '</div><div><div class="d-brand-name">AEQUOR ERANOS</div><div class="d-brand-sub">潛水艇追蹤</div></div></div>' +
+        '<div class="d-nav-item' + (state.route === 'overview' ? ' active' : '') + '" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
+        '<div class="d-nav-item">' + svgWorkshops() + '<span>工坊管理</span></div>' +
+        '<div class="d-nav-item' + (state.route === 'upload' ? ' active' : '') + '" data-action="nav-upload">' + svgUpload() + '<span>上傳截圖</span></div>' +
+        '<div class="d-nav-item">' + svgSettings() + '<span>設定</span></div>' +
+        '<div style="flex-grow:1;"></div>' +
+        '<div class="d-user"><div class="avatar" style="width:30px;height:30px;">VL</div><div style="min-width:0;"><div class="d-user-name">Visy Lockhart</div><div class="d-user-sub">已連結 Discord</div></div></div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Desktop overview ----------
+  function renderDesktopOverview() {
+    var items = filteredItems();
+    var wsLabel = PAGER_ITEMS[state.wsIndex];
+    var isAll = state.wsIndex === 0;
+
+    var tableRows = items.map(function (r) {
+      var isReady = r.status === 'ready';
+      var color = isReady ? AMBER : ACCENT;
+      return (
+        '<div class="table-row' + (isReady ? ' ready' : '') + '">' +
+          '<div style="display:flex;align-items:center;justify-content:center;position:relative;">' +
+            (r.status === 'exploring' ? '<span class="row-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
+            '<span class="row-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="width:8px;height:8px;background:' + color + '"></span>' +
+          '</div>' +
+          '<div class="t-sub">' + esc(r.sub) + '</div>' +
+          '<div class="t-ws">' + esc(r.wsName + ' · ' + r.pos) + '</div>' +
+          '<div class="t-status' + (isReady ? ' ready' : '') + '">' + esc(r.label) + '</div>' +
+          '<div class="t-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.time) + '</div>' +
+          '<div class="t-eta mono">' + esc(r.eta) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    var cards = items.map(function (r) {
+      var isReady = r.status === 'ready';
+      var color = isReady ? AMBER : ACCENT;
+      return (
+        '<div class="d-card' + (isReady ? ' ready' : '') + '">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+            '<div class="status-pill' + (isReady ? ' ready' : '') + '">' +
+              '<span class="pill-dot-wrap">' +
+                (r.status === 'exploring' ? '<span class="pill-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
+                '<span class="pill-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="background:' + color + '"></span>' +
+              '</span>' + esc(r.label) +
+            '</div>' +
+            '<div class="d-card-pos">' + esc(r.pos) + '</div>' +
+          '</div>' +
+          '<div class="d-card-sub">' + esc(r.sub) + '</div>' +
+          '<div class="d-card-ws">' + esc(r.wsName) + '</div>' +
+          '<div class="d-card-bottom"><div class="d-card-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.shortTime) + '</div><div class="d-card-eta mono">' + esc(r.shortEta) + '</div></div>' +
+        '</div>'
+      );
+    }).join('');
+
+    return (
+      '<div class="d-wrap">' +
+        desktopSidebar() +
+        '<div class="d-main">' +
+          '<div class="d-topbar">' +
+            '<div><div class="d-title">潛水艇總覽</div><div class="d-subtitle">依返航時間由近到遠排序，跨工坊一次看</div></div>' +
+            '<div class="d-pager">' +
+              '<button class="d-pager-btn" data-action="ws-prev">' + svgChevronLeft() + '</button>' +
+              '<div class="d-pager-label" style="color:' + (isAll ? 'var(--text)' : ACCENT) + '">' + esc(wsLabel) + '</div>' +
+              '<button class="d-pager-btn" data-action="ws-next">' + svgChevronRight() + '</button>' +
+              '<div class="pager-dots" style="padding:0 6px 0 2px;">' + pagerDots() + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+              '<div class="pill-toggle">' +
+                '<button class="icon-btn' + (state.view === 'list' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-list" aria-label="切換為表格檢視">' + svgListIcon() + '</button>' +
+                '<button class="icon-btn' + (state.view === 'card' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-card" aria-label="切換為卡片檢視">' + svgGridIcon() + '</button>' +
+              '</div>' +
+              '<button class="upload-cta" data-action="nav-upload">' + svgUpload() + '上傳截圖</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="d-stats">' +
+            '<div class="d-stat"><div class="num mono">3</div><div class="label">工坊</div></div>' +
+            '<div class="d-stat"><div class="num mono">9</div><div class="label">潛水艇</div></div>' +
+            '<div class="d-stat ready"><div class="num mono">1</div><div class="label">艘待收艇</div></div>' +
+            '<div class="d-stat wide"><div style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;">最快返航</div><div style="font-size:15px;font-weight:600;">深海一號 <span style="color:var(--text-dim);font-weight:400;">・貝殼工坊</span></div></div>' +
+          '</div>' +
+          (state.view === 'list'
+            ? '<div class="table-wrap"><div class="table-head"><div></div><div>潛水艇</div><div>工坊</div><div>狀態</div><div>剩餘時間</div><div>預計返航</div></div>' + tableRows + '</div>'
+            : '<div class="card-grid">' + cards + '</div>') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Desktop upload ----------
+  function renderDesktopUpload() {
+    var hasFile = !!state.fileName;
+    var dzClass = 'dropzone' + (state.dragActive ? ' drag' : '') + (hasFile ? ' has-file' : '');
+    return (
+      '<div class="d-wrap">' +
+        desktopSidebar() +
+        '<div class="d-main" style="display:flex;flex-direction:column;align-items:center;">' +
+          '<div class="d-upload-wrap" style="width:100%;">' +
+            '<div class="back-link" data-action="nav-overview">' + svgChevronLeft() + ' 返回總覽</div>' +
+            '<div class="d-title" style="margin-bottom:4px;">上傳截圖</div>' +
+            '<div class="d-subtitle" style="margin-bottom:22px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
+            '<div style="margin-bottom:16px;">' +
+              '<label class="field-label">上傳到工坊</label>' +
+              '<select class="field-select" style="width:260px;">' + WORKSHOP_ORDER.map(function (w) { return '<option>' + esc(w) + '</option>'; }).join('') + '</select>' +
+            '</div>' +
+            '<label class="' + dzClass + '" style="height:260px;" data-role="dropzone-desktop">' +
+              '<input type="file" accept="image/*" data-role="file-input">' +
+              (hasFile
+                ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:14px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:12px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
+                : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud(state.dragActive ? ACCENT : '#6b7594') + '</div><div style="font-size:15px;font-weight:600;">拖放截圖到這裡</div><div style="font-size:12.5px;color:var(--text-dim);">或 <span style="color:' + ACCENT + ';font-weight:600;text-decoration:underline;">瀏覽檔案</span></div><div style="font-size:11px;color:var(--text-faint);margin-top:6px;">支援 PNG／JPG・潛艇管理畫面或情報頁截圖</div></div>') +
+            '</label>' +
+            (hasFile
+              ? '<div style="display:flex;align-items:center;gap:10px;margin-top:16px;"><button class="primary-btn" style="flex-grow:1;">開始辨識</button><button class="ghost-btn" style="width:auto;padding:12px 18px;" data-action="upload-reset">重新選擇</button></div>'
+              : '') +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function render() {
+    var mobileHtml = state.route === 'overview' ? renderMobileOverview() : renderMobileUpload();
+    var desktopHtml = state.route === 'overview' ? renderDesktopOverview() : renderDesktopUpload();
+    document.getElementById('app').innerHTML = mobileHtml + '<div class="desktop-shell">' + desktopHtml + '</div>';
+  }
+
+  function handleFile(fileName) {
+    state.fileName = fileName || '潛艇截圖.png';
+    state.dragActive = false;
+    render();
+  }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+    if (action === 'view-list') state.view = 'list';
+    else if (action === 'view-card') state.view = 'card';
+    else if (action === 'ws-prev') state.wsIndex = (state.wsIndex - 1 + PAGER_ITEMS.length) % PAGER_ITEMS.length;
+    else if (action === 'ws-next') state.wsIndex = (state.wsIndex + 1) % PAGER_ITEMS.length;
+    else if (action === 'nav-overview') state.route = 'overview';
+    else if (action === 'nav-upload') state.route = 'upload';
+    else if (action === 'upload-reset') { state.fileName = null; }
+    else return;
+    render();
+  });
+
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-role="file-input"]')) {
+      var f = e.target.files && e.target.files[0];
+      handleFile(f ? f.name : null);
+    }
+  });
+
+  document.addEventListener('dragover', function (e) {
+    var dz = e.target.closest('[data-role="dropzone-desktop"]');
+    if (!dz) return;
+    e.preventDefault();
+    if (!state.dragActive) { state.dragActive = true; render(); }
+  });
+  document.addEventListener('dragleave', function (e) {
+    var dz = e.target.closest('[data-role="dropzone-desktop"]');
+    if (!dz) return;
+    if (state.dragActive) { state.dragActive = false; render(); }
+  });
+  document.addEventListener('drop', function (e) {
+    var dz = e.target.closest('[data-role="dropzone-desktop"]');
+    if (!dz) return;
+    e.preventDefault();
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    handleFile(f ? f.name : null);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
