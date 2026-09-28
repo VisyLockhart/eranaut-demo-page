@@ -11,6 +11,7 @@
     --accent: #2dd4bf;
     --accent-dark: #0e7490;
     --amber: #fbbf24;
+    --danger: #f87171;
     --bg: #070a14;
     --bg-elevated: #0f1526;
     --bg-elevated-2: #0d1220;
@@ -213,6 +214,32 @@
   .d-upload-wrap { max-width: 720px; }
   .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 12.5px; margin-bottom: 16px; cursor: pointer; }
 
+  /* ---------- Workshop management ---------- */
+  .ws-browse-item { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); cursor: pointer; }
+  .ws-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(45,212,191,0.12); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; color: var(--accent); }
+  .ws-row { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); }
+  .ws-arrows { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+  .ws-arrow-btn { width: 26px; height: 18px; border-radius: 5px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ws-arrow-btn:disabled { color: var(--text-faint); cursor: not-allowed; }
+  .ws-icon-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+  .ws-icon-btn.danger { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: var(--danger); }
+  .ws-add-btn { margin-top: 4px; padding: 14px; border-radius: 14px; background: transparent; border: 1.5px dashed var(--border-strong); color: var(--accent); font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; width: 100%; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(3,6,14,0.72); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal-box { width: 100%; max-width: 380px; background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: 18px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .modal-box.danger { border-color: rgba(248,113,113,0.35); }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close { width: 30px; height: 30px; border-radius: 8px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+  .modal-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1.5px solid var(--accent); color: var(--text); font-size: 15px; margin-bottom: 6px; }
+  .modal-input.error { border-color: var(--danger); }
+  .modal-hint { font-size: 12px; color: var(--text-dim); }
+  .modal-error-text { font-size: 12px; color: var(--danger); margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-secondary { flex: 1; padding: 12px; border-radius: 10px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-primary-modal { flex: 1; padding: 12px; border-radius: 10px; background: var(--accent); border: none; color: #06251f; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .btn-danger { flex: 1; padding: 12px; border-radius: 10px; background: var(--danger); border: none; color: #2a0a0a; font-size: 14px; font-weight: 700; cursor: pointer; }
+
   @media (min-width: 768px) {
     .mobile-shell { display: none; }
     .desktop-shell { display: block; }
@@ -228,8 +255,17 @@
 
   var ACCENT = '#2dd4bf';
   var AMBER = '#fbbf24';
-  var WORKSHOP_ORDER = ['貝殼工坊', '鋼鐵之心', '珊瑚礁工坊'];
-  var PAGER_ITEMS = ['全部'].concat(WORKSHOP_ORDER);
+  var DANGER = '#f87171';
+  var WORKSHOPS = [
+    { id: 'ws1', name: '貝殼工坊' },
+    { id: 'ws2', name: '鋼鐵之心' },
+    { id: 'ws3', name: '珊瑚礁工坊' }
+  ];
+  var nextWsId = 4;
+
+  function pagerItems() {
+    return ['全部'].concat(WORKSHOPS.map(function (w) { return w.name; }));
+  }
 
   var RAW = [
     { sub: '深海一號', wsName: '貝殼工坊', pos: '位置 1', time: '可收艇', shortTime: '可收艇', eta: '－', shortEta: '－', label: '探索完成', hint: '前往收艇', status: 'ready' },
@@ -245,10 +281,13 @@
 
   var state = {
     view: 'list',        // 'list' | 'card'
-    wsIndex: 0,           // index into PAGER_ITEMS
-    route: 'overview',    // 'overview' | 'upload'
+    wsIndex: 0,           // index into pagerItems()
+    route: 'overview',    // 'overview' | 'upload' | 'workshops'
     fileName: null,
-    dragActive: false
+    dragActive: false,
+    wsManageMode: false,
+    modal: null,          // null | {type:'form', id:string|null, draft?:string} | {type:'delete', id:string}
+    modalError: null
   };
 
   function esc(s) {
@@ -257,8 +296,24 @@
 
   function filteredItems() {
     if (state.wsIndex === 0) return RAW;
-    var name = PAGER_ITEMS[state.wsIndex];
+    var name = pagerItems()[state.wsIndex];
     return RAW.filter(function (r) { return r.wsName === name; });
+  }
+
+  function workshopStats(name) {
+    var exploring = 0, ready = 0;
+    RAW.forEach(function (r) {
+      if (r.wsName === name) { if (r.status === 'ready') ready++; else exploring++; }
+    });
+    return { exploring: exploring, ready: ready };
+  }
+
+  function wsStatsLine(stats) {
+    var parts = [];
+    if (stats.exploring > 0) parts.push(stats.exploring + ' 艘探索中');
+    if (stats.ready > 0) parts.push('<span style="color:var(--amber)">' + stats.ready + ' 艘待收</span>');
+    if (!parts.length) return '<span style="color:var(--text-faint)">目前沒有潛水艇記錄</span>';
+    return parts.join(' · ');
   }
 
   function svgChevronLeft() {
@@ -297,19 +352,49 @@
   function svgUploadCloud(color) {
     return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 V4"></path><path d="M7 9 L12 4 L17 9"></path><path d="M4 16 v3 a2 2 0 0 0 2 2 h12 a2 2 0 0 0 2 -2 v-3"></path></svg>';
   }
+  function svgPencil() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
+  }
+  function svgTrash() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>';
+  }
+  function svgChevronUp() {
+    return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>';
+  }
+  function svgChevronDown() {
+    return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>';
+  }
+  function svgDragDots() {
+    return '<svg width="14" height="22" viewBox="0 0 16 24" fill="#4a5273" style="flex:0 0 auto;"><circle cx="4" cy="5" r="1.6"></circle><circle cx="12" cy="5" r="1.6"></circle><circle cx="4" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="4" cy="19" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>';
+  }
+  function svgPlus() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>';
+  }
+  function svgWarning() {
+    return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="' + DANGER + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path></svg>';
+  }
+  function svgClose() {
+    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg>';
+  }
+  function svgChevronRightMuted() {
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7594" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><path d="M9 18l6-6-6-6"></path></svg>';
+  }
 
   function pagerDots() {
-    return PAGER_ITEMS.map(function (_, i) {
+    return pagerItems().map(function (_, i) {
       return '<span class="dot' + (i === state.wsIndex ? ' active' : '') + '"></span>';
     }).join('');
   }
 
   function statsBlock(cls) {
+    var wsCount = WORKSHOPS.length;
+    var subCount = RAW.length;
+    var readyCount = RAW.filter(function (r) { return r.status === 'ready'; }).length;
     return (
       '<div class="' + cls + '">' +
-        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">3</div><div class="label">工坊</div></div>' +
-        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">9</div><div class="label">潛水艇</div></div>' +
-        '<div class="' + (cls === 'm-stats' ? 'm-stat ready' : 'd-stat ready') + '"><div class="num mono">1</div><div class="label">艘待收艇</div></div>' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">' + wsCount + '</div><div class="label">工坊</div></div>' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat' : 'd-stat') + '"><div class="num mono">' + subCount + '</div><div class="label">潛水艇</div></div>' +
+        '<div class="' + (cls === 'm-stats' ? 'm-stat ready' : 'd-stat ready') + '"><div class="num mono">' + readyCount + '</div><div class="label">艘待收艇</div></div>' +
       '</div>'
     );
   }
@@ -352,7 +437,7 @@
       );
     }).join('');
 
-    var wsLabel = PAGER_ITEMS[state.wsIndex];
+    var wsLabel = pagerItems()[state.wsIndex];
     var isAll = state.wsIndex === 0;
 
     return (
@@ -381,7 +466,7 @@
         (state.view === 'list' ? '<div class="m-list">' + listRows + '</div>' : '<div class="m-cards">' + cardItems + '</div>') +
         '<div class="m-nav">' +
           '<div class="nav-item active" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
-          '<div class="nav-item">' + svgWorkshops() + '<span>工坊</span></div>' +
+          '<div class="nav-item" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
           '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
           '<div class="nav-item">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
@@ -402,7 +487,7 @@
           '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:18px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
           '<div style="margin-bottom:16px;">' +
             '<label class="field-label">上傳到工坊</label>' +
-            '<select class="field-select">' + WORKSHOP_ORDER.map(function (w) { return '<option>' + esc(w) + '</option>'; }).join('') + '</select>' +
+            '<select class="field-select">' + WORKSHOPS.map(function (w) { return '<option>' + esc(w.name) + '</option>'; }).join('') + '</select>' +
           '</div>' +
           '<label class="dropzone' + (hasFile ? ' has-file' : '') + '" style="height:180px;" data-role="dropzone-mobile">' +
             '<input type="file" accept="image/*" data-role="file-input">' +
@@ -421,7 +506,7 @@
         '</div>' +
         '<div class="m-nav">' +
           '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
-          '<div class="nav-item">' + svgWorkshops() + '<span>工坊</span></div>' +
+          '<div class="nav-item" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
           '<div class="nav-item nav-upload active"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
           '<div class="nav-item">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
@@ -435,7 +520,7 @@
       '<div class="d-sidebar">' +
         '<div class="d-brand"><div class="logo-mark">' + svgLogo() + '</div><div><div class="d-brand-name">AEQUOR ERANOS</div><div class="d-brand-sub">潛水艇追蹤</div></div></div>' +
         '<div class="d-nav-item' + (state.route === 'overview' ? ' active' : '') + '" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
-        '<div class="d-nav-item">' + svgWorkshops() + '<span>工坊管理</span></div>' +
+        '<div class="d-nav-item' + (state.route === 'workshops' ? ' active' : '') + '" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊管理</span></div>' +
         '<div class="d-nav-item' + (state.route === 'upload' ? ' active' : '') + '" data-action="nav-upload">' + svgUpload() + '<span>上傳截圖</span></div>' +
         '<div class="d-nav-item">' + svgSettings() + '<span>設定</span></div>' +
         '<div style="flex-grow:1;"></div>' +
@@ -447,7 +532,7 @@
   // ---------- Desktop overview ----------
   function renderDesktopOverview() {
     var items = filteredItems();
-    var wsLabel = PAGER_ITEMS[state.wsIndex];
+    var wsLabel = pagerItems()[state.wsIndex];
     var isAll = state.wsIndex === 0;
 
     var tableRows = items.map(function (r) {
@@ -510,9 +595,9 @@
             '</div>' +
           '</div>' +
           '<div class="d-stats">' +
-            '<div class="d-stat"><div class="num mono">3</div><div class="label">工坊</div></div>' +
-            '<div class="d-stat"><div class="num mono">9</div><div class="label">潛水艇</div></div>' +
-            '<div class="d-stat ready"><div class="num mono">1</div><div class="label">艘待收艇</div></div>' +
+            '<div class="d-stat"><div class="num mono">' + WORKSHOPS.length + '</div><div class="label">工坊</div></div>' +
+            '<div class="d-stat"><div class="num mono">' + RAW.length + '</div><div class="label">潛水艇</div></div>' +
+            '<div class="d-stat ready"><div class="num mono">' + RAW.filter(function (r) { return r.status === 'ready'; }).length + '</div><div class="label">艘待收艇</div></div>' +
             '<div class="d-stat wide"><div style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;">最快返航</div><div style="font-size:15px;font-weight:600;">深海一號 <span style="color:var(--text-dim);font-weight:400;">・貝殼工坊</span></div></div>' +
           '</div>' +
           (state.view === 'list'
@@ -537,7 +622,7 @@
             '<div class="d-subtitle" style="margin-bottom:22px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
             '<div style="margin-bottom:16px;">' +
               '<label class="field-label">上傳到工坊</label>' +
-              '<select class="field-select" style="width:260px;">' + WORKSHOP_ORDER.map(function (w) { return '<option>' + esc(w) + '</option>'; }).join('') + '</select>' +
+              '<select class="field-select" style="width:260px;">' + WORKSHOPS.map(function (w) { return '<option>' + esc(w.name) + '</option>'; }).join('') + '</select>' +
             '</div>' +
             '<label class="' + dzClass + '" style="height:260px;" data-role="dropzone-desktop">' +
               '<input type="file" accept="image/*" data-role="file-input">' +
@@ -554,10 +639,183 @@
     );
   }
 
+  // ---------- Mobile workshops (CRUD) ----------
+  function renderMobileWorkshops() {
+    var isEdit = state.wsManageMode;
+    var rows = WORKSHOPS.map(function (w, i) {
+      var stats = workshopStats(w.name);
+      if (isEdit) {
+        return (
+          '<div class="ws-row">' +
+            svgDragDots() +
+            '<div class="ws-arrows">' +
+              '<button class="ws-arrow-btn" data-action="ws-move-up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="上移">' + svgChevronUp() + '</button>' +
+              '<button class="ws-arrow-btn" data-action="ws-move-down" data-id="' + w.id + '"' + (i === WORKSHOPS.length - 1 ? ' disabled' : '') + ' aria-label="下移">' + svgChevronDown() + '</button>' +
+            '</div>' +
+            '<div style="flex:1;font-size:15px;font-weight:600;min-width:0;">' + esc(w.name) + '</div>' +
+            '<button class="ws-icon-btn" data-action="ws-edit" data-id="' + w.id + '" aria-label="編輯工坊">' + svgPencil() + '</button>' +
+            '<button class="ws-icon-btn danger" data-action="ws-delete" data-id="' + w.id + '" aria-label="刪除工坊">' + svgTrash() + '</button>' +
+          '</div>'
+        );
+      }
+      return (
+        '<div class="ws-browse-item" data-action="ws-goto" data-id="' + w.id + '">' +
+          '<div class="ws-icon">' + svgWorkshops() + '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:16px;font-weight:600;">' + esc(w.name) + '</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-top:2px;">' + wsStatsLine(stats) + '</div>' +
+          '</div>' +
+          svgChevronRightMuted() +
+        '</div>'
+      );
+    }).join('');
+
+    if (!rows) {
+      rows = '<div style="padding:30px 8px;text-align:center;color:var(--text-dim);font-size:13px;">尚未建立任何工坊</div>';
+    }
+
+    return (
+      '<div class="mobile-shell">' +
+        '<div class="m-header">' +
+          '<div style="font-size:18px;font-weight:700;flex-grow:1;">' + (isEdit ? '工坊管理' : '工坊') + '</div>' +
+          (isEdit
+            ? '<button class="ghost-btn" style="width:auto;padding:9px 18px;background:var(--accent);color:#06251f;border:none;font-weight:700;" data-action="ws-manage-toggle">完成</button>'
+            : '<button class="ws-icon-btn" style="width:40px;height:40px;" data-action="ws-manage-toggle" aria-label="管理工坊">' + svgSettings() + '</button>') +
+        '</div>' +
+        '<div style="padding:0 18px 10px;font-size:12.5px;color:var(--text-dim);">' + (isEdit ? '拖曳 ⠿ 或用 ▲▼ 調整順序' : '點工坊卡片可跳到總覽並套用該工坊過濾') + '</div>' +
+        '<div style="flex-grow:1;overflow-y:auto;padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;">' +
+          rows +
+          (isEdit ? '<button class="ws-add-btn" data-action="ws-add">' + svgPlus() + '新增工坊</button>' : '') +
+        '</div>' +
+        '<div class="m-nav">' +
+          '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
+          '<div class="nav-item active" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
+          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item">' + svgUser() + '<span>我的</span></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Desktop workshops (CRUD) ----------
+  function renderDesktopWorkshops() {
+    var isEdit = state.wsManageMode;
+    var rows = WORKSHOPS.map(function (w, i) {
+      var stats = workshopStats(w.name);
+      if (isEdit) {
+        return (
+          '<div class="ws-row" style="padding:14px 16px;">' +
+            svgDragDots() +
+            '<div class="ws-icon">' + svgWorkshops() + '</div>' +
+            '<div style="flex:1;">' +
+              '<div style="font-size:16px;font-weight:600;">' + esc(w.name) + '</div>' +
+              '<div style="font-size:13px;color:var(--text-muted);margin-top:2px;">' + wsStatsLine(stats) + '</div>' +
+            '</div>' +
+            '<div class="ws-arrows">' +
+              '<button class="ws-arrow-btn" data-action="ws-move-up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="上移">' + svgChevronUp() + '</button>' +
+              '<button class="ws-arrow-btn" data-action="ws-move-down" data-id="' + w.id + '"' + (i === WORKSHOPS.length - 1 ? ' disabled' : '') + ' aria-label="下移">' + svgChevronDown() + '</button>' +
+            '</div>' +
+            '<button class="ws-icon-btn" data-action="ws-edit" data-id="' + w.id + '" aria-label="編輯工坊">' + svgPencil() + '</button>' +
+            '<button class="ws-icon-btn danger" data-action="ws-delete" data-id="' + w.id + '" aria-label="刪除工坊">' + svgTrash() + '</button>' +
+          '</div>'
+        );
+      }
+      return (
+        '<div class="ws-browse-item" data-action="ws-goto" data-id="' + w.id + '">' +
+          '<div class="ws-icon">' + svgWorkshops() + '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:16px;font-weight:600;">' + esc(w.name) + '</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-top:2px;">' + wsStatsLine(stats) + '</div>' +
+          '</div>' +
+          svgChevronRightMuted() +
+        '</div>'
+      );
+    }).join('');
+
+    if (!rows) {
+      rows = '<div style="padding:30px 8px;text-align:center;color:var(--text-dim);font-size:13px;">尚未建立任何工坊</div>';
+    }
+
+    return (
+      '<div class="d-wrap">' +
+        desktopSidebar() +
+        '<div class="d-main">' +
+          '<div class="d-topbar">' +
+            '<div><div class="d-title">' + (isEdit ? '工坊管理' : '工坊') + '</div><div class="d-subtitle">' + (isEdit ? '拖曳 ⠿ 把手調整順序，或用列尾的 ▲▼ 做精準微調' : '點工坊卡片可跳到總覽並套用該工坊過濾') + '</div></div>' +
+            '<div style="display:flex;gap:10px;">' +
+              (isEdit ? '<button class="upload-cta" style="background:transparent;border:1.5px dashed var(--border-strong);color:var(--accent);" data-action="ws-add">' + svgPlus() + '新增工坊</button>' : '') +
+              '<button class="upload-cta" data-action="ws-manage-toggle">' + (isEdit ? '完成' : svgSettings() + '管理工坊') + '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;max-width:720px;">' + rows + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------- Modal ----------
+  function renderModal() {
+    if (!state.modal) return '';
+
+    if (state.modal.type === 'form') {
+      var isEditing = !!state.modal.id;
+      var current = isEditing ? WORKSHOPS.filter(function (w) { return w.id === state.modal.id; })[0] : null;
+      var basePrefill = current ? current.name : '';
+      var prefill = state.modal.draft !== undefined ? state.modal.draft : basePrefill;
+      return (
+        '<div class="modal-overlay" data-action="modal-cancel">' +
+          '<div class="modal-box" data-action="modal-noop">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">' +
+              '<div class="modal-title">' + (isEditing ? '編輯工坊' : '新增工坊') + '</div>' +
+              '<button class="modal-close" data-action="modal-cancel" aria-label="關閉">' + svgClose() + '</button>' +
+            '</div>' +
+            '<label class="field-label">工坊名稱</label>' +
+            '<input type="text" id="ws-name-input" class="modal-input' + (state.modalError ? ' error' : '') + '" value="' + esc(prefill) + '" maxlength="20">' +
+            (state.modalError
+              ? '<div class="modal-error-text">' + esc(state.modalError) + '</div>'
+              : '<div class="modal-hint" style="margin-bottom:22px;">工坊名稱需在公會內唯一，用來在潛艇列表中辨識所屬工坊</div>') +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" data-action="modal-cancel">取消</button>' +
+              '<button class="btn-primary-modal" data-action="modal-save" data-id="' + (isEditing ? state.modal.id : '') + '">' + (isEditing ? '儲存' : '新增') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    if (state.modal.type === 'delete') {
+      var w = WORKSHOPS.filter(function (x) { return x.id === state.modal.id; })[0];
+      if (!w) return '';
+      var stats = workshopStats(w.name);
+      var count = stats.exploring + stats.ready;
+      return (
+        '<div class="modal-overlay" data-action="modal-cancel">' +
+          '<div class="modal-box danger" data-action="modal-noop">' +
+            (count > 0 ? '<div style="width:48px;height:48px;border-radius:12px;background:rgba(248,113,113,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">' + svgWarning() + '</div>' : '') +
+            '<div class="modal-title" style="margin-bottom:10px;">刪除工坊</div>' +
+            '<div style="font-size:14px;line-height:1.6;color:var(--text-muted);margin-bottom:24px;">' +
+              (count > 0
+                ? '工坊「<span style="color:var(--text);font-weight:600;">' + esc(w.name) + '</span>」底下還有 <span style="color:' + DANGER + ';font-weight:700;">' + count + ' 艘</span> 潛艇記錄，刪除工坊會<span style="color:var(--text);font-weight:600;">一併刪除這些記錄</span>，此動作無法復原。'
+                : '確定要刪除「<span style="color:var(--text);font-weight:600;">' + esc(w.name) + '</span>」嗎？這個工坊底下目前沒有潛艇記錄。') +
+            '</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" data-action="modal-cancel">取消</button>' +
+              '<button class="btn-danger" data-action="modal-delete-confirm" data-id="' + w.id + '">確認刪除</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    return '';
+  }
+
   function render() {
-    var mobileHtml = state.route === 'overview' ? renderMobileOverview() : renderMobileUpload();
-    var desktopHtml = state.route === 'overview' ? renderDesktopOverview() : renderDesktopUpload();
-    document.getElementById('app').innerHTML = mobileHtml + '<div class="desktop-shell">' + desktopHtml + '</div>';
+    var mobileHtml, desktopHtml;
+    if (state.route === 'overview') { mobileHtml = renderMobileOverview(); desktopHtml = renderDesktopOverview(); }
+    else if (state.route === 'upload') { mobileHtml = renderMobileUpload(); desktopHtml = renderDesktopUpload(); }
+    else { mobileHtml = renderMobileWorkshops(); desktopHtml = renderDesktopWorkshops(); }
+    document.getElementById('app').innerHTML = mobileHtml + '<div class="desktop-shell">' + desktopHtml + '</div>' + renderModal();
   }
 
   function handleFile(fileName) {
@@ -572,11 +830,84 @@
     var action = el.getAttribute('data-action');
     if (action === 'view-list') state.view = 'list';
     else if (action === 'view-card') state.view = 'card';
-    else if (action === 'ws-prev') state.wsIndex = (state.wsIndex - 1 + PAGER_ITEMS.length) % PAGER_ITEMS.length;
-    else if (action === 'ws-next') state.wsIndex = (state.wsIndex + 1) % PAGER_ITEMS.length;
-    else if (action === 'nav-overview') state.route = 'overview';
-    else if (action === 'nav-upload') state.route = 'upload';
+    else if (action === 'ws-prev') state.wsIndex = (state.wsIndex - 1 + pagerItems().length) % pagerItems().length;
+    else if (action === 'ws-next') state.wsIndex = (state.wsIndex + 1) % pagerItems().length;
+    else if (action === 'nav-overview') { state.route = 'overview'; state.modal = null; }
+    else if (action === 'nav-upload') { state.route = 'upload'; state.modal = null; }
+    else if (action === 'nav-workshops') { state.route = 'workshops'; state.modal = null; }
     else if (action === 'upload-reset') { state.fileName = null; }
+    else if (action === 'ws-manage-toggle') { state.wsManageMode = !state.wsManageMode; }
+    else if (action === 'ws-goto') {
+      var gid = el.getAttribute('data-id');
+      var gw = WORKSHOPS.filter(function (w) { return w.id === gid; })[0];
+      if (gw) {
+        var idx = pagerItems().indexOf(gw.name);
+        state.route = 'overview';
+        state.wsIndex = idx >= 0 ? idx : 0;
+      }
+    }
+    else if (action === 'ws-move-up') {
+      var upId = el.getAttribute('data-id');
+      var upIdx = WORKSHOPS.map(function (w) { return w.id; }).indexOf(upId);
+      if (upIdx > 0) {
+        var tmpUp = WORKSHOPS[upIdx - 1];
+        WORKSHOPS[upIdx - 1] = WORKSHOPS[upIdx];
+        WORKSHOPS[upIdx] = tmpUp;
+      }
+    }
+    else if (action === 'ws-move-down') {
+      var dnId = el.getAttribute('data-id');
+      var dnIdx = WORKSHOPS.map(function (w) { return w.id; }).indexOf(dnId);
+      if (dnIdx >= 0 && dnIdx < WORKSHOPS.length - 1) {
+        var tmpDn = WORKSHOPS[dnIdx + 1];
+        WORKSHOPS[dnIdx + 1] = WORKSHOPS[dnIdx];
+        WORKSHOPS[dnIdx] = tmpDn;
+      }
+    }
+    else if (action === 'ws-add') { state.modal = { type: 'form', id: null }; state.modalError = null; }
+    else if (action === 'ws-edit') { state.modal = { type: 'form', id: el.getAttribute('data-id') }; state.modalError = null; }
+    else if (action === 'ws-delete') { state.modal = { type: 'delete', id: el.getAttribute('data-id') }; }
+    else if (action === 'modal-noop') { return; }
+    else if (action === 'modal-cancel') { state.modal = null; state.modalError = null; }
+    else if (action === 'modal-save') {
+      var input = document.getElementById('ws-name-input');
+      var val = input ? input.value.trim() : '';
+      var editId = el.getAttribute('data-id') || null;
+      if (!val) {
+        state.modal.draft = input ? input.value : '';
+        state.modalError = '請輸入工坊名稱';
+      } else {
+        var dup = WORKSHOPS.some(function (w) { return w.name === val && w.id !== editId; });
+        if (dup) {
+          state.modal.draft = input ? input.value : val;
+          state.modalError = '此名稱已存在';
+        } else {
+          if (editId) {
+            var target = WORKSHOPS.filter(function (w) { return w.id === editId; })[0];
+            if (target) {
+              var oldName = target.name;
+              target.name = val;
+              RAW.forEach(function (r) { if (r.wsName === oldName) r.wsName = val; });
+            }
+          } else {
+            WORKSHOPS.push({ id: 'ws' + (nextWsId++), name: val });
+          }
+          state.modal = null;
+          state.modalError = null;
+        }
+      }
+    }
+    else if (action === 'modal-delete-confirm') {
+      var delId = el.getAttribute('data-id');
+      var delTarget = WORKSHOPS.filter(function (w) { return w.id === delId; })[0];
+      if (delTarget) {
+        RAW = RAW.filter(function (r) { return r.wsName !== delTarget.name; });
+        WORKSHOPS = WORKSHOPS.filter(function (w) { return w.id !== delId; });
+        var pi = pagerItems();
+        if (state.wsIndex >= pi.length) state.wsIndex = 0;
+      }
+      state.modal = null;
+    }
     else return;
     render();
   });
