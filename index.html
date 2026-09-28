@@ -82,7 +82,7 @@
   /* ---------- Mobile shell ---------- */
   .mobile-shell {
     display: flex; flex-direction: column; max-width: 480px; margin: 0 auto;
-    min-height: 100vh;
+    height: 100vh;
   }
   .m-header {
     flex: 0 0 auto; padding: 20px 18px 14px; display: flex; align-items: center; gap: 10px;
@@ -137,8 +137,19 @@
   .card-hint { font-size: 10.5px; color: var(--text-faint); }
 
   .m-nav { flex: 0 0 auto; display: flex; align-items: stretch; border-top: 1px solid var(--border); background: #0a0e1c; }
-  .copyright-footer { margin-top: 16px; padding: 12px 2px 4px; text-align: center; color: var(--text-faint); font-size: 9.5px; line-height: 1.6; border-top: 1px solid var(--border); }
-  .copyright-footer-d { text-align: left; margin-top: 10px; padding: 12px 2px 2px; border-top: 1px solid var(--border); }
+  .copyright-footer-d { text-align: left; margin-top: 10px; padding: 12px 2px 2px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 9.5px; line-height: 1.6; }
+  .copyright-bar {
+    flex: 0 0 auto; padding: 5px 18px 6px; text-align: center; color: var(--text-faint); font-size: 9px;
+    background: #0a0e1c; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .copyright-overlay {
+    position: fixed; inset: 0; background: rgba(3,6,14,0.72); display: flex; align-items: flex-end;
+    justify-content: center; z-index: 60; padding: 0;
+  }
+  .copyright-panel {
+    width: 100%; max-width: 480px; background: var(--bg-elevated); border: 1px solid var(--border-strong);
+    border-bottom: none; border-radius: 16px 16px 0 0; padding: 20px 20px 28px; box-shadow: 0 -12px 32px rgba(0,0,0,0.4);
+  }
   .nav-item { flex: 1; padding: 9px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #5b6488; cursor: pointer; }
   .nav-item.active { color: var(--accent); }
   .nav-item span { font-size: 10px; font-weight: 500; }
@@ -366,7 +377,8 @@
     modalError: null,
     dragId: null,          // id of the workshop currently being drag-reordered (desktop mouse drag)
     authState: 'authenticated', // 'authenticated' | 'landing' | 'processing' | 'denied' | 'expired'
-    devOpen: false
+    devOpen: false,
+    copyrightExpanded: false
   };
   var authTimer = null;
 
@@ -435,11 +447,37 @@
     return '<div class="ws-tooltip-bubble">' + svgMapPin() + ' ' + esc(addressLine(w)) + '</div>';
   }
 
-  function copyrightFooter(kind) {
+  var COPYRIGHT_LINE = 'Eranaut · Created by Visy Lockhart（Winter@迦樓羅）· FFXIV 繁體中文版';
+  var COPYRIGHT_DISCLAIMER = '非官方粉絲工具，與 SQUARE ENIX CO., LTD. 無關，僅供社群內部使用，不得用於商業用途。';
+
+  function copyrightFooterDesktop() {
     return (
-      '<div class="copyright-footer' + (kind === 'desktop' ? ' copyright-footer-d' : '') + '">' +
-        '<div>Eranaut · Created by Visy Lockhart（Winter@迦樓羅）· FFXIV 繁體中文版</div>' +
-        '<div>非 SQUARE ENIX CO., LTD. 官方網站，僅供社群內部使用　FINAL FANTASY XIV © 2010–' + new Date().getFullYear() + ' SQUARE ENIX CO., LTD. All Rights Reserved.</div>' +
+      '<div class="copyright-footer-d">' +
+        '<div>' + COPYRIGHT_LINE + '</div>' +
+        '<div>' + COPYRIGHT_DISCLAIMER + '</div>' +
+      '</div>'
+    );
+  }
+
+  // Mobile: a slim always-visible line under the tab bar; tapping it opens
+  // an overlay with the full notice. Kept out of the scrollable list/card
+  // area entirely so it never depends on scroll position.
+  function copyrightBarMobile() {
+    return '<div class="copyright-bar" data-action="copyright-toggle">' + esc(COPYRIGHT_LINE) + '</div>';
+  }
+
+  function copyrightOverlayMobile() {
+    if (!state.copyrightExpanded) return '';
+    return (
+      '<div class="copyright-overlay" data-action="copyright-close">' +
+        '<div class="copyright-panel" data-action="modal-noop">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+            '<div style="font-size:14px;font-weight:700;">關於 Eranaut</div>' +
+            '<button class="modal-close" data-action="copyright-close" aria-label="關閉">' + svgClose() + '</button>' +
+          '</div>' +
+          '<div style="font-size:12.5px;color:var(--text-muted);line-height:1.7;">' + esc(COPYRIGHT_LINE) + '</div>' +
+          '<div style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-top:8px;">' + COPYRIGHT_DISCLAIMER + '</div>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -767,13 +805,15 @@
             '<button class="icon-btn' + (state.view === 'card' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-card" aria-label="切換為卡片檢視">' + svgGridIcon() + '</button>' +
           '</div>' +
         '</div>' +
-        (state.view === 'list' ? '<div class="m-list">' + listRows + copyrightFooter('mobile') + '</div>' : '<div class="m-cards">' + cardItems + copyrightFooter('mobile') + '</div>') +
+        (state.view === 'list' ? '<div class="m-list">' + listRows + '</div>' : '<div class="m-cards">' + cardItems + '</div>') +
         '<div class="m-nav">' +
           '<div class="nav-item active" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
           '<div class="nav-item" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
           '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
+        copyrightBarMobile() +
+        copyrightOverlayMobile() +
       '</div>'
     );
   }
@@ -807,7 +847,6 @@
           (hasFile
             ? '<div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;"><button class="primary-btn">開始辨識</button><button class="ghost-btn" data-action="upload-reset">重新選擇</button></div>'
             : '') +
-          copyrightFooter('mobile') +
         '</div>' +
         '<div class="m-nav">' +
           '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
@@ -815,6 +854,8 @@
           '<div class="nav-item nav-upload active"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
+        copyrightBarMobile() +
+        copyrightOverlayMobile() +
       '</div>'
     );
   }
@@ -830,7 +871,7 @@
         '<div class="d-nav-item">' + svgSettings() + '<span>設定</span></div>' +
         '<div style="flex-grow:1;"></div>' +
         '<div class="d-user"><div class="avatar" style="width:30px;height:30px;">W</div><div style="min-width:0;flex-grow:1;"><div class="d-user-name">Winter</div><div class="d-user-sub">已連結 Discord</div></div><button class="ws-icon-btn" style="width:28px;height:28px;flex:0 0 auto;" data-action="auth-logout" aria-label="登出">' + svgLogout() + '</button></div>' +
-        copyrightFooter('desktop') +
+        copyrightFooterDesktop() +
       '</div>'
     );
   }
@@ -1003,7 +1044,6 @@
         '<div style="flex-grow:1;overflow-y:auto;padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;">' +
           rows +
           (isEdit ? '<button class="ws-add-btn" data-action="ws-add">' + svgPlus() + '新增工坊</button>' : '') +
-          copyrightFooter('mobile') +
         '</div>' +
         '<div class="m-nav">' +
           '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
@@ -1011,6 +1051,8 @@
           '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
+        copyrightBarMobile() +
+        copyrightOverlayMobile() +
       '</div>'
     );
   }
@@ -1234,6 +1276,8 @@
     else if (action === 'ws-edit') { state.modal = { type: 'form', id: el.getAttribute('data-id') }; state.modalError = null; }
     else if (action === 'ws-delete') { state.modal = { type: 'delete', id: el.getAttribute('data-id') }; }
     else if (action === 'modal-noop') { return; }
+    else if (action === 'copyright-toggle') { state.copyrightExpanded = !state.copyrightExpanded; }
+    else if (action === 'copyright-close') { state.copyrightExpanded = false; }
     else if (action === 'modal-cancel') { state.modal = null; state.modalError = null; }
     else if (action === 'modal-save') {
       var input = document.getElementById('ws-name-input');
