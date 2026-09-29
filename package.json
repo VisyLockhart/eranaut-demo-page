@@ -1,0 +1,13 @@
+{
+  "name": "eranaut-demo-page",
+  "private": true,
+  "description": "Eranaut demo prototype (static index.html) — dev-only test tooling",
+  "scripts": {
+    "test": "node tests/smoke_drag_feedback.js && node tests/smoke_update_flow.js",
+    "test:browser": "node tests/real_browser_drag.js && node tests/real_browser_touch.js && node tests/real_browser_update.js"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1",
+    "playwright": "^1.56.0"
+  }
+}
