@@ -209,7 +209,7 @@
   .table-wrap > *:first-child { border-radius: 12px 12px 0 0; }
   .table-wrap > *:last-child { border-radius: 0 0 12px 12px; }
   .table-head, .table-row {
-    display: grid; grid-template-columns: 28px 1.6fr 1.3fr 1fr 1.1fr 1fr; gap: 8px; align-items: center; padding: 11px 16px;
+    display: grid; grid-template-columns: 28px 1.6fr 1.3fr 1fr 1.1fr 1fr 24px; gap: 8px; align-items: center; padding: 11px 16px;
   }
   .table-head { padding: 10px 16px; background: var(--bg-elevated-2); font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; }
   .table-row { border-top: 1px solid rgba(148,163,184,0.06); }
@@ -321,6 +321,51 @@
   .auth-expired-banner { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 16px; margin: -44px -24px 30px; background: rgba(251,191,36,0.12); border-bottom: 1px solid rgba(251,191,36,0.3); font-size: 12px; font-weight: 600; color: #f0c869; }
   .auth-expired-banner-d { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 40px; margin: -56px -40px 0; background: rgba(251,191,36,0.12); border-bottom: 1px solid rgba(251,191,36,0.3); font-size: 13px; font-weight: 600; color: #f0c869; flex-shrink: 0; }
 
+
+  /* ---------- Update flow (OCR confirm / manual entry / quick edit) ---------- */
+  .up-tabs { display: flex; gap: 4px; background: var(--bg-elevated-2); border: 1px solid var(--border); border-radius: 11px; padding: 3px; margin-bottom: 16px; }
+  .up-tab { flex: 1; padding: 9px; border: none; background: transparent; color: var(--text-dim); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .up-tab.active { background: var(--accent); color: #04121a; }
+  .up-empty { padding: 26px 16px; text-align: center; background: var(--bg-elevated); border: 1px dashed var(--border-strong); border-radius: 14px; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+  .ocr-busy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; height: 200px; background: var(--bg-elevated-2); border: 2px dashed rgba(45,212,191,0.35); border-radius: 16px; }
+  .ocr-spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(45,212,191,0.2); border-top-color: var(--accent); animation: ufspin .9s linear infinite; }
+  @keyframes ufspin { to { transform: rotate(360deg); } }
+  .uf-ws { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .uf-ws b { color: var(--text); }
+  .uf-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
+  .uf-stale { display: flex; gap: 8px; padding: 11px 13px; margin-bottom: 14px; border-radius: 11px; background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.35); color: #f0c869; font-size: 12.5px; line-height: 1.6; }
+  .uf-row { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .uf-row.ready { border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.05); }
+  .uf-row.has-err { border-color: var(--danger); }
+  .uf-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .uf-pos { font-size: 18px; color: var(--text-dim); flex: 0 0 auto; }
+  .uf-name { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 9px; background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); font-size: 14px; font-weight: 600; }
+  .uf-rm { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg-elevated-2); color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; }
+  .uf-seg { display: flex; gap: 4px; background: var(--bg-elevated-2); border: 1px solid var(--border); border-radius: 9px; padding: 3px; margin-bottom: 10px; }
+  .uf-seg button { flex: 1; padding: 7px; border: none; border-radius: 7px; background: transparent; color: var(--text-dim); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .uf-seg button.on { background: var(--accent); color: #04121a; }
+  .uf-seg button.on.amber { background: var(--amber); }
+  .uf-time { display: flex; gap: 8px; }
+  .uf-num { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 9px; padding: 0 10px; }
+  .uf-num input { width: 100%; min-width: 0; border: none; background: transparent; color: var(--text); font-size: 16px; padding: 10px 0; font-family: 'JetBrains Mono', monospace; text-align: right; outline: none; }
+  .uf-num span { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; }
+  .uf-num.flagged { border-color: var(--amber); background: rgba(251,191,36,0.08); }
+  .uf-eta { font-size: 12px; color: var(--text-dim); margin-top: 8px; min-height: 16px; }
+  .uf-flag-msg { font-size: 12px; color: var(--amber); margin-top: 8px; line-height: 1.5; }
+  .uf-err { font-size: 12px; color: var(--danger); margin-top: 8px; }
+  .uf-add { width: 100%; padding: 11px; border-radius: 11px; border: 1px dashed var(--border-strong); background: transparent; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+  .uf-actions-m { display: flex; gap: 10px; padding: 12px 72px 12px 18px; border-top: 1px solid var(--border); background: var(--bg); flex: 0 0 auto; }
+  .uf-actions-m .ghost-btn { flex: 1; }
+  .uf-actions-m .primary-btn { flex: 2; }
+  .uf-actions-d { display: flex; gap: 10px; margin-top: 8px; }
+  .uf-actions-d .primary-btn { flex: 1; }
+  .uf-actions-d .ghost-btn { width: auto; padding: 12px 22px; }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: var(--bg-elevated-2); border: 1px solid var(--accent); color: var(--text); padding: 10px 18px; border-radius: 999px; font-size: 13px; z-index: 300; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  .qe { cursor: pointer; }
+  .table-row.qe:hover, .d-card.qe:hover { background: rgba(45,212,191,0.06); }
+  .qe-icon { color: var(--text-faint); display: flex; align-items: center; flex: 0 0 auto; margin-left: 8px; }
+  .qe-icon svg { width: 14px; height: 14px; }
+
   /* ---------- Dev demo panel ---------- */
   .dev-panel { position: fixed; right: 14px; bottom: 14px; z-index: 200; }
   .dev-toggle-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
@@ -377,10 +422,46 @@
     { sub: '潛水艇-4', wsName: '珊瑚礁工坊', pos: '位置 4', time: '11 時 40 分', shortTime: '11時40分', eta: '09/29 04:22', shortEta: '明04:22', label: '探索中', hint: '明 04:22', status: 'exploring' }
   ];
 
+  var BOOT_AT = Date.now();
+  var MAX_SUBS = 4;
+  var nextRid = 1;
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  // Seed strings are hardcoded display text; derive a sortable etaAt from the "剩餘時間" text.
+  function seedMins(t) {
+    var m = /(?:(\d+)\s*日)?\s*(?:(\d+)\s*時)?\s*(?:(\d+)\s*分)?/.exec(t) || [];
+    return (parseInt(m[1] || 0, 10) * 1440) + (parseInt(m[2] || 0, 10) * 60) + parseInt(m[3] || 0, 10);
+  }
+  RAW.forEach(function (r) {
+    r.rid = 'r' + (nextRid++);
+    r.etaAt = r.status === 'ready' ? 0 : BOOT_AT + seedMins(r.time) * 60000;
+  });
+  function sortedItems(list) {
+    return list.map(function (r, i) { return { r: r, i: i }; }).sort(function (a, b) {
+      return (a.r.etaAt - b.r.etaAt) || (a.i - b.i);
+    }).map(function (x) { return x.r; });
+  }
+  function buildDisplay(status, mins, now) {
+    if (status === 'ready') {
+      return { time: '可收艇', shortTime: '可收艇', eta: '－', shortEta: '－', label: '探索完成', hint: '前往收艇', etaAt: 0 };
+    }
+    var d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
+    var time = d > 0 ? d + ' 日 ' + h + ' 時 ' + pad2(m) + ' 分' : (h > 0 ? h + ' 時 ' + pad2(m) + ' 分' : m + ' 分');
+    var at = new Date(now + mins * 60000), today = new Date(now);
+    var hhmm = pad2(at.getHours()) + ':' + pad2(at.getMinutes());
+    var md = pad2(at.getMonth() + 1) + '/' + pad2(at.getDate());
+    var dayDiff = Math.round((new Date(at.getFullYear(), at.getMonth(), at.getDate()) - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000);
+    return {
+      time: time, shortTime: time.replace(/ /g, ''), eta: md + ' ' + hhmm,
+      shortEta: dayDiff === 0 ? hhmm : (dayDiff === 1 ? '明' + hhmm : md),
+      label: '探索中', hint: dayDiff === 0 ? '約 ' + hhmm : (dayDiff === 1 ? '明 ' + hhmm : md + ' ' + hhmm),
+      etaAt: now + mins * 60000
+    };
+  }
+
   var state = {
     view: 'list',        // 'list' | 'card'
     wsIndex: 0,           // index into pagerItems()
-    route: 'overview',    // 'overview' | 'upload' | 'workshops'
+    route: 'overview',    // 'overview' | 'upload' | 'update' | 'workshops'
     fileName: null,
     dragActive: false,
     wsManageMode: false,
@@ -389,7 +470,11 @@
     dragId: null,          // id of the workshop currently being drag-reordered (desktop mouse drag)
     authState: 'authenticated', // 'authenticated' | 'landing' | 'processing' | 'denied' | 'expired'
     devOpen: false,
-    copyrightExpanded: false
+    copyrightExpanded: false,
+    upTab: 'ocr',          // 'ocr' | 'manual'
+    upWsId: null,
+    ocrBusy: false,
+    uf: null               // update form: {mode:'ocr'|'manual'|'quick', wsId, rows:[...], errors:{}, stale:bool}
   };
   var authTimer = null;
 
@@ -406,9 +491,9 @@
   }
 
   function filteredItems() {
-    if (state.wsIndex === 0) return RAW;
+    if (state.wsIndex === 0) return sortedItems(RAW);
     var name = pagerItems()[state.wsIndex];
-    return RAW.filter(function (r) { return r.wsName === name; });
+    return sortedItems(RAW.filter(function (r) { return r.wsName === name; }));
   }
 
   function workshopStats(name) {
@@ -753,6 +838,268 @@
     );
   }
 
+
+  function fastestHtml() {
+    var f = sortedItems(RAW)[0];
+    if (!f) return '<div style="font-size:15px;font-weight:600;color:var(--text-faint);">－</div>';
+    return '<div style="font-size:15px;font-weight:600;">' + esc(f.sub) + ' <span style="color:var(--text-dim);font-weight:400;">・' + esc(f.wsName) + '</span></div>';
+  }
+
+  // ---------- Update flow: OCR confirm / manual entry / quick edit ----------
+  var OCR_FAKE = [
+    { s: 'exploring', d: '0', h: '3', m: '41' },
+    { s: 'exploring', d: '0', h: '2', m: '05' },
+    { s: 'ready' },
+    { s: 'exploring', d: '1', h: '0', m: '17' }
+  ];
+  var ocrToken = 0;
+  var staleTimer = null;
+
+  function wsById(id) { return WORKSHOPS.filter(function (w) { return w.id === id; })[0] || null; }
+  function uploadWsId() {
+    if (state.upWsId && wsById(state.upWsId)) return state.upWsId;
+    return WORKSHOPS.length ? WORKSHOPS[0].id : null;
+  }
+  function posNum(posStr) { var m = /(\d+)/.exec(posStr || ''); return m ? parseInt(m[1], 10) : 1; }
+  function subsOfWs(name) {
+    return RAW.filter(function (r) { return r.wsName === name; }).sort(function (a, b) { return posNum(a.pos) - posNum(b.pos); });
+  }
+  function newRow(pos, name, status, rid) {
+    return { pos: pos, name: name, status: status || 'exploring', d: '', h: '', m: '', flag: null, added: !rid, rid: rid || null };
+  }
+  function discardUf() {
+    if (staleTimer) { clearTimeout(staleTimer); staleTimer = null; }
+    state.uf = null; state.ocrBusy = false; ocrToken++;
+  }
+  function startStaleTimer() {
+    if (staleTimer) clearTimeout(staleTimer);
+    var ms = window.ERANAUT_STALE_MS || 180000;
+    staleTimer = setTimeout(function () {
+      staleTimer = null;
+      if (!state.uf || state.uf.mode === 'quick') return;
+      state.uf.stale = true;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-uf-stale-slot]'), function (el) { el.innerHTML = staleBannerHtml(); });
+    }, ms);
+  }
+  function staleBannerHtml() {
+    return '<div class="uf-stale"><span>⏱</span><span>你停留在這個畫面一陣子了，還沒送出。剩餘時間會以「按下送出的那一刻」起算，我們不會自動幫你修正數字——如果離截圖／遊戲畫面已經過了一段時間，建議先對照遊戲再送出。</span></div>';
+  }
+  function buildUf(mode) {
+    var wsId = uploadWsId(), ws = wsById(wsId);
+    if (!ws) return false;
+    var subs = subsOfWs(ws.name), rows = [];
+    if (mode === 'ocr') {
+      var n = Math.max(subs.length, 2);
+      for (var i = 0; i < n; i++) {
+        var sb = subs[i], f = OCR_FAKE[i % OCR_FAKE.length];
+        var row = sb ? newRow(posNum(sb.pos), sb.sub, f.s, sb.rid) : newRow(i + 1, '潛水艇-' + (i + 1), f.s, null);
+        if (f.s === 'exploring') { row.d = f.d; row.h = f.h; row.m = f.m; }
+        rows.push(row);
+      }
+      var flagged = -1;
+      rows.forEach(function (r, idx) { if (flagged < 0 && idx >= 1 && r.status === 'exploring') flagged = idx; });
+      if (flagged < 0) rows.forEach(function (r, idx) { if (flagged < 0 && r.status === 'exploring') flagged = idx; });
+      if (flagged >= 0) rows[flagged].flag = 'm';
+    } else {
+      subs.forEach(function (sb) { rows.push(newRow(posNum(sb.pos), sb.sub, sb.status, sb.rid)); });
+      if (!rows.length) rows.push(newRow(1, '潛水艇-1', 'exploring', null));
+    }
+    state.uf = { mode: mode, wsId: wsId, rows: rows, errors: {}, stale: false };
+    return true;
+  }
+  function startOcr() {
+    if (!state.fileName || state.ocrBusy || !uploadWsId()) return;
+    state.ocrBusy = true;
+    var tok = ++ocrToken;
+    setTimeout(function () {
+      if (tok !== ocrToken || !state.ocrBusy) return;
+      state.ocrBusy = false;
+      if (buildUf('ocr')) { state.route = 'update'; startStaleTimer(); }
+      render();
+    }, typeof window.ERANAUT_OCR_MS === 'number' ? window.ERANAUT_OCR_MS : 1400);
+  }
+  function ufMins(row) {
+    if (!/^\d+$/.test(row.d) || !/^\d+$/.test(row.h) || !/^\d+$/.test(row.m)) return null;
+    return parseInt(row.d, 10) * 1440 + parseInt(row.h, 10) * 60 + parseInt(row.m, 10);
+  }
+  function ufEtaText(row) {
+    if (row.status === 'ready') return '這艘會顯示為「可收艇」';
+    var mins = ufMins(row);
+    if (mins === null || mins <= 0) return '填完 日／時／分 後會顯示預計返航時間';
+    var b = buildDisplay('exploring', mins, Date.now());
+    return '預計返航 ' + b.eta + '（以送出當下起算）';
+  }
+  function validateUf() {
+    var errs = {}, ok = true;
+    state.uf.rows.forEach(function (row, i) {
+      var msg = null;
+      if (!row.name.replace(/\s/g, '')) msg = '請輸入潛艇名稱';
+      else if (row.status === 'exploring') {
+        if (!/^\d+$/.test(row.d) || !/^\d+$/.test(row.h) || !/^\d+$/.test(row.m)) msg = '日、時、分都要填，沒有的填 0';
+        else if (parseInt(row.h, 10) > 23 || parseInt(row.m, 10) > 59) msg = '「時」最多 23、「分」最多 59';
+        else if (ufMins(row) <= 0) msg = '剩餘時間不能是 0——已經完成請改選「探索完成」';
+      }
+      if (msg) { errs[i] = msg; ok = false; }
+    });
+    state.uf.errors = errs;
+    return ok;
+  }
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+  }
+  function submitUf() {
+    if (!state.uf || !validateUf()) return false;
+    var ws = wsById(state.uf.wsId);
+    if (!ws) return false;
+    var now = Date.now(), count = state.uf.rows.length;
+    state.uf.rows.forEach(function (row) {
+      var mins = row.status === 'ready' ? 0 : ufMins(row);
+      var disp = buildDisplay(row.status, mins, now);
+      var item = row.rid ? RAW.filter(function (r) { return r.rid === row.rid; })[0] : null;
+      if (!item) {
+        item = { rid: 'r' + (nextRid++), wsName: ws.name, pos: '位置 ' + row.pos };
+        RAW.push(item);
+      }
+      item.sub = row.name.trim();
+      item.status = row.status;
+      for (var k in disp) if (disp.hasOwnProperty(k)) item[k] = disp[k];
+    });
+    discardUf();
+    state.modal = null;
+    state.fileName = null;
+    state.route = 'overview';
+    var idx = pagerItems().indexOf(ws.name);
+    state.wsIndex = idx >= 0 ? idx : 0;
+    setTimeout(function () { showToast('已更新「' + ws.name + '」' + count + ' 艘潛艇'); }, 0);
+    return true;
+  }
+  function openQuickEdit(rid) {
+    var item = RAW.filter(function (r) { return r.rid === rid; })[0];
+    if (!item) return;
+    var ws = wsByName(item.wsName);
+    if (!ws) return;
+    state.uf = { mode: 'quick', wsId: ws.id, rows: [newRow(posNum(item.pos), item.sub, item.status, item.rid)], errors: {}, stale: false };
+    state.modal = { type: 'quick' };
+  }
+
+  function ufRowHtml(row, idx, errs) {
+    var isReady = row.status === 'ready';
+    var flagged = row.flag === 'm';
+    var seg = '<div class="uf-seg">' +
+      '<button data-action="uf-status" data-idx="' + idx + '" data-status="exploring" class="' + (!isReady ? 'on' : '') + '">探索中</button>' +
+      '<button data-action="uf-status" data-idx="' + idx + '" data-status="ready" class="' + (isReady ? 'on amber' : '') + '">探索完成</button>' +
+    '</div>';
+    function num(field, unit, max) {
+      return '<label class="uf-num' + (field === 'm' && flagged ? ' flagged' : '') + '"' + (field === 'm' && flagged ? ' data-uf-flag-el="' + idx + '"' : '') + '>' +
+        '<input type="text" inputmode="numeric" maxlength="2" placeholder="0" data-uf-field="' + field + '" data-uf-idx="' + idx + '" data-max="' + max + '" value="' + esc(row[field]) + '" aria-label="' + unit + '"><span>' + unit + '</span></label>';
+    }
+    return (
+      '<div class="uf-row' + (isReady ? ' ready' : '') + (errs[idx] ? ' has-err' : '') + '" data-uf-row="' + idx + '">' +
+        '<div class="uf-top"><span class="uf-pos">' + posCircle('位置 ' + row.pos) + '</span>' +
+          '<input type="text" class="uf-name" maxlength="20" data-uf-field="name" data-uf-idx="' + idx + '" value="' + esc(row.name) + '" aria-label="潛艇名稱">' +
+          (row.added && state.uf.mode !== 'quick' ? '<button class="uf-rm" data-action="uf-remove" data-idx="' + idx + '" aria-label="移除這一列">×</button>' : '') +
+        '</div>' +
+        seg +
+        (isReady ? '' : '<div class="uf-time">' + num('d', '日', 99) + num('h', '時', 23) + num('m', '分', 59) + '</div>') +
+        '<div class="uf-eta mono" data-uf-eta="' + idx + '">' + esc(ufEtaText(row)) + '</div>' +
+        (flagged && !isReady ? '<div class="uf-flag-msg" data-uf-flag-el="' + idx + '">⚠ 請核對：這個數字辨識信心偏低，請對照截圖確認（修改後這個提示會消失）</div>' : '') +
+        (errs[idx] ? '<div class="uf-err">' + esc(errs[idx]) + '</div>' : '') +
+      '</div>'
+    );
+  }
+  function ufTitle() { return state.uf && state.uf.mode === 'ocr' ? '確認辨識結果' : '手動輸入'; }
+  function ufBodyHtml() {
+    var uf = state.uf, ws = wsById(uf.wsId);
+    var note = uf.mode === 'ocr'
+      ? '已從「' + esc(state.fileName || '潛艇截圖.png') + '」辨識出 ' + uf.rows.length + ' 艘。請對照截圖確認，有誤可直接修改。<span style="color:var(--text-faint);">（Demo：辨識結果為假資料）</span>'
+      : '對照遊戲內潛艇畫面，逐艘填入剩餘時間；沒有的單位填 0。';
+    var rows = uf.rows.map(function (r, i) { return ufRowHtml(r, i, uf.errors); }).join('');
+    return (
+      '<div class="uf-ws">' + svgServer() + '<b>' + esc(ws ? ws.name : '') + '</b>' + (ws ? wsMetaLine(ws.name) : '') + '</div>' +
+      '<div class="uf-note">' + note + '</div>' +
+      '<div data-uf-stale-slot>' + (uf.stale ? staleBannerHtml() : '') + '</div>' +
+      rows +
+      (uf.rows.length < MAX_SUBS ? '<button class="uf-add" data-action="uf-add">＋ 加入第 ' + nextFreePos() + ' 艘</button>' : '')
+    );
+  }
+  function nextFreePos() {
+    var used = {};
+    state.uf.rows.forEach(function (r) { used[r.pos] = true; });
+    for (var p = 1; p <= MAX_SUBS; p++) if (!used[p]) return p;
+    return MAX_SUBS + 1;
+  }
+
+  function uploadModeBody(desk) {
+    var tab = state.upTab, wid = uploadWsId(), hasFile = !!state.fileName;
+    if (!WORKSHOPS.length) {
+      return '<div class="up-empty">還沒有任何工坊，請先建立一個工坊，才能更新潛艇資料。<div style="margin-top:12px;"><button class="primary-btn" style="width:auto;padding:10px 20px;" data-action="nav-workshops">前往工坊管理</button></div></div>';
+    }
+    var tabs = '<div class="up-tabs"><button class="up-tab' + (tab === 'ocr' ? ' active' : '') + '" data-action="up-tab" data-tab="ocr">截圖辨識</button><button class="up-tab' + (tab === 'manual' ? ' active' : '') + '" data-action="up-tab" data-tab="manual">手動輸入</button></div>';
+    var sel = '<div style="margin-bottom:16px;"><label class="field-label">更新哪個工坊</label><select class="field-select" data-role="up-ws"' + (desk ? ' style="width:260px;"' : '') + '>' +
+      WORKSHOPS.map(function (w) { return '<option value="' + w.id + '"' + (w.id === wid ? ' selected' : '') + '>' + esc(w.name) + '</option>'; }).join('') + '</select></div>';
+    var pane;
+    if (tab === 'manual') {
+      pane = '<div class="up-empty" style="text-align:left;">不方便截圖時，可以直接手動輸入：會列出這個工坊目前的潛艇，你逐艘填入剩餘時間，一次更新整個工坊。<div style="margin-top:14px;"><button class="primary-btn" style="' + (desk ? 'width:auto;padding:11px 28px;' : '') + '" data-action="manual-start">開始輸入</button></div></div>';
+    } else if (state.ocrBusy) {
+      pane = '<div class="ocr-busy"><div class="ocr-spinner"></div><div style="font-size:13.5px;font-weight:600;">辨識中…</div><div style="font-size:11.5px;color:var(--text-dim);">Demo：這裡是假的辨識動畫</div></div>';
+    } else if (desk) {
+      var dzClass = 'dropzone' + (state.dragActive ? ' drag' : '') + (hasFile ? ' has-file' : '');
+      pane =
+        '<label class="' + dzClass + '" style="height:260px;" data-role="dropzone-desktop">' +
+          '<input type="file" accept="image/*" data-role="file-input">' +
+          (hasFile
+            ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:14px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:12px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
+            : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud(state.dragActive ? ACCENT : '#6b7594') + '</div><div style="font-size:15px;font-weight:600;">拖放截圖到這裡</div><div style="font-size:12.5px;color:var(--text-dim);">或 <span style="color:' + ACCENT + ';font-weight:600;text-decoration:underline;">瀏覽檔案</span></div><div style="font-size:11px;color:var(--text-faint);margin-top:6px;">支援 PNG／JPG・潛艇管理畫面或情報頁截圖</div></div>') +
+        '</label>' +
+        (hasFile ? '<div style="display:flex;align-items:center;gap:10px;margin-top:16px;"><button class="primary-btn" style="flex-grow:1;" data-action="ocr-start">開始辨識</button><button class="ghost-btn" style="width:auto;padding:12px 18px;" data-action="upload-reset">重新選擇</button></div>' : '');
+    } else {
+      pane =
+        '<label class="dropzone' + (hasFile ? ' has-file' : '') + '" style="height:180px;" data-role="dropzone-mobile">' +
+          '<input type="file" accept="image/*" data-role="file-input">' +
+          (hasFile
+            ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:13.5px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:11.5px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
+            : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud('#6b7594') + '</div><div style="font-size:14px;font-weight:600;">點擊選擇截圖</div><div style="font-size:11px;color:var(--text-faint);">支援 PNG／JPG</div></div>') +
+        '</label>' +
+        '<div class="divider-row"><div class="divider-line"></div><div style="font-size:11px;color:var(--text-faint);">或</div><div class="divider-line"></div></div>' +
+        '<label class="camera-btn"><input type="file" accept="image/*" capture="environment" data-role="file-input">' + svgUpload() + '<span style="font-size:13.5px;font-weight:600;">拍照上傳</span></label>' +
+        (hasFile ? '<div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;"><button class="primary-btn" data-action="ocr-start">開始辨識</button><button class="ghost-btn" data-action="upload-reset">重新選擇</button></div>' : '');
+    }
+    return tabs + sel + pane;
+  }
+
+  function renderMobileUpdate() {
+    return (
+      '<div class="mobile-shell">' +
+        '<div class="m-header">' +
+          '<div class="pager-btn" style="width:32px;height:32px;border-radius:9px;cursor:pointer;" data-action="update-cancel">' + svgChevronLeft() + '</div>' +
+          '<div style="font-size:15px;font-weight:700;">' + ufTitle() + '</div>' +
+        '</div>' +
+        '<div class="m-upload-body">' + ufBodyHtml() + '</div>' +
+        '<div class="uf-actions-m"><button class="ghost-btn" data-action="update-cancel">取消</button><button class="primary-btn" data-action="update-submit">送出更新</button></div>' +
+        copyrightBarMobile() +
+        copyrightOverlayMobile() +
+      '</div>'
+    );
+  }
+  function renderDesktopUpdate() {
+    return (
+      '<div class="d-wrap">' +
+        desktopSidebar() +
+        '<div class="d-main" style="display:flex;flex-direction:column;align-items:center;">' +
+          '<div class="d-upload-wrap" style="width:100%;">' +
+            '<div class="back-link" data-action="update-cancel">' + svgChevronLeft() + ' 返回</div>' +
+            '<div class="d-title" style="margin-bottom:14px;">' + ufTitle() + '</div>' +
+            ufBodyHtml() +
+            '<div class="uf-actions-d"><button class="ghost-btn" data-action="update-cancel">取消</button><button class="primary-btn" data-action="update-submit">送出更新</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   // ---------- Mobile overview ----------
   function renderMobileOverview() {
     var items = filteredItems();
@@ -760,13 +1107,14 @@
       var isReady = r.status === 'ready';
       var color = isReady ? AMBER : ACCENT;
       return (
-        '<div class="row' + (isReady ? ' ready' : '') + '">' +
+        '<div class="row qe' + (isReady ? ' ready' : '') + '" data-action="quick-edit" data-rid="' + r.rid + '">' +
           '<div class="row-dot-wrap">' +
             (r.status === 'exploring' ? '<span class="row-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
             '<span class="row-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="background:' + color + '"></span>' +
           '</div>' +
           '<div class="row-main"><div class="row-sub">' + esc(r.sub) + '</div><div class="row-ws">' + esc(r.wsName) + ' ' + posCircle(r.pos) + wsMetaLine(r.wsName) + '</div></div>' +
           '<div class="row-right"><div class="row-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.time) + '</div><div class="row-status" style="color:' + (isReady ? '#d8a94c' : '') + '">' + esc(r.label) + '</div></div>' +
+          '<div class="qe-icon">' + svgPencil() + '</div>' +
         '</div>'
       );
     }).join('');
@@ -775,7 +1123,7 @@
       var isReady = r.status === 'ready';
       var color = isReady ? AMBER : ACCENT;
       return (
-        '<div class="card' + (isReady ? ' ready' : '') + '">' +
+        '<div class="card qe' + (isReady ? ' ready' : '') + '" data-action="quick-edit" data-rid="' + r.rid + '">' +
           '<div class="card-top">' +
             '<div class="card-ws">' + esc(r.wsName) + '</div>' +
             '<div class="status-pill' + (isReady ? ' ready' : '') + '">' +
@@ -814,7 +1162,7 @@
         '</div>' +
         (curWs ? '<div class="ws-context-line">' + svgServer() + esc(curWs.server || '未設定伺服器') + '<span style="color:var(--text-faint);">·</span>' + esc(curWs.captain || '未設定代表角色') + '</div>' : '') +
         '<div class="m-viewswitch">' +
-          '<div class="sort-label">' + (isAll ? '依返航時間排序' : esc(wsLabel) + ' · 依返航時間排序') + '</div>' +
+          '<div class="sort-label">' + (isAll ? '依返航時間排序・點潛艇可修改' : esc(wsLabel) + ' · 依返航時間排序・點潛艇可修改') + '</div>' +
           '<div class="pill-toggle">' +
             '<button class="icon-btn' + (state.view === 'list' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-list" aria-label="切換為列表檢視">' + svgListIcon() + '</button>' +
             '<button class="icon-btn' + (state.view === 'card' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-card" aria-label="切換為卡片檢視">' + svgGridIcon() + '</button>' +
@@ -824,7 +1172,7 @@
         '<div class="m-nav">' +
           '<div class="nav-item active" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
           '<div class="nav-item" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
-          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>更新</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
         copyrightBarMobile() +
@@ -835,38 +1183,20 @@
 
   // ---------- Mobile upload ----------
   function renderMobileUpload() {
-    var hasFile = !!state.fileName;
     return (
       '<div class="mobile-shell">' +
         '<div class="m-header">' +
           '<div class="pager-btn" style="width:32px;height:32px;border-radius:9px;cursor:pointer;" data-action="nav-overview">' + svgChevronLeft() + '</div>' +
-          '<div style="font-size:15px;font-weight:700;">上傳截圖</div>' +
+          '<div style="font-size:15px;font-weight:700;">更新潛艇</div>' +
         '</div>' +
         '<div class="m-upload-body">' +
-          '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:18px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
-          '<div style="margin-bottom:16px;">' +
-            '<label class="field-label">上傳到工坊</label>' +
-            '<select class="field-select">' + WORKSHOPS.map(function (w) { return '<option>' + esc(w.name) + '</option>'; }).join('') + '</select>' +
-          '</div>' +
-          '<label class="dropzone' + (hasFile ? ' has-file' : '') + '" style="height:180px;" data-role="dropzone-mobile">' +
-            '<input type="file" accept="image/*" data-role="file-input">' +
-            (hasFile
-              ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:13.5px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:11.5px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
-              : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:48px;height:48px;border-radius:13px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud('#6b7594') + '</div><div style="font-size:14px;font-weight:600;">點擊選擇截圖</div><div style="font-size:11px;color:var(--text-faint);">支援 PNG／JPG</div></div>') +
-          '</label>' +
-          '<div class="divider-row"><div class="divider-line"></div><div style="font-size:11px;color:var(--text-faint);">或</div><div class="divider-line"></div></div>' +
-          '<label class="camera-btn">' +
-            '<input type="file" accept="image/*" capture="environment" data-role="file-input">' +
-            svgUpload() + '<span style="font-size:13.5px;font-weight:600;">拍照上傳</span>' +
-          '</label>' +
-          (hasFile
-            ? '<div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;"><button class="primary-btn">開始辨識</button><button class="ghost-btn" data-action="upload-reset">重新選擇</button></div>'
-            : '') +
+          '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:16px;">用截圖辨識或手動輸入，一次更新整個工坊的潛艇狀態</div>' +
+          uploadModeBody(false) +
         '</div>' +
         '<div class="m-nav">' +
           '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
           '<div class="nav-item" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
-          '<div class="nav-item nav-upload active"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item nav-upload active"><div class="nav-upload-fab">' + svgUpload() + '</div><span>更新</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
         copyrightBarMobile() +
@@ -882,7 +1212,7 @@
         '<div class="d-brand"><div class="logo-mark">' + svgLogo() + '</div><div><div class="d-brand-name">AEQUOR ERANOS</div><div class="d-brand-sub">潛水艇追蹤</div></div></div>' +
         '<div class="d-nav-item' + (state.route === 'overview' ? ' active' : '') + '" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
         '<div class="d-nav-item' + (state.route === 'workshops' ? ' active' : '') + '" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊管理</span></div>' +
-        '<div class="d-nav-item' + (state.route === 'upload' ? ' active' : '') + '" data-action="nav-upload">' + svgUpload() + '<span>上傳截圖</span></div>' +
+        '<div class="d-nav-item' + ((state.route === 'upload' || state.route === 'update') ? ' active' : '') + '" data-action="nav-upload">' + svgUpload() + '<span>更新潛艇</span></div>' +
         '<div class="d-nav-item">' + svgSettings() + '<span>設定</span></div>' +
         '<div style="flex-grow:1;"></div>' +
         '<div class="d-user"><div class="avatar" style="width:30px;height:30px;">W</div><div style="min-width:0;flex-grow:1;"><div class="d-user-name">Winter</div><div class="d-user-sub">已連結 Discord</div></div><button class="ws-icon-btn" style="width:28px;height:28px;flex:0 0 auto;" data-action="auth-logout" aria-label="登出">' + svgLogout() + '</button></div>' +
@@ -903,7 +1233,7 @@
       var isReady = r.status === 'ready';
       var color = isReady ? AMBER : ACCENT;
       return (
-        '<div class="table-row' + (isReady ? ' ready' : '') + '">' +
+        '<div class="table-row qe' + (isReady ? ' ready' : '') + '" data-action="quick-edit" data-rid="' + r.rid + '">' +
           '<div style="display:flex;align-items:center;justify-content:center;position:relative;">' +
             (r.status === 'exploring' ? '<span class="row-ring pulse-ring" style="border-color:' + color + '"></span>' : '') +
             '<span class="row-dot' + (r.status === 'exploring' ? ' pulse-dot' : '') + '" style="width:8px;height:8px;background:' + color + '"></span>' +
@@ -913,6 +1243,7 @@
           '<div class="t-status' + (isReady ? ' ready' : '') + '">' + esc(r.label) + '</div>' +
           '<div class="t-time mono" style="color:' + (isReady ? AMBER : 'inherit') + '">' + esc(r.time) + '</div>' +
           '<div class="t-eta mono">' + esc(r.eta) + '</div>' +
+          '<div class="qe-icon" style="margin:0;">' + svgPencil() + '</div>' +
         '</div>'
       );
     }).join('');
@@ -921,7 +1252,7 @@
       var isReady = r.status === 'ready';
       var color = isReady ? AMBER : ACCENT;
       return (
-        '<div class="d-card' + (isReady ? ' ready' : '') + '">' +
+        '<div class="d-card qe' + (isReady ? ' ready' : '') + '" data-action="quick-edit" data-rid="' + r.rid + '">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
             '<div class="status-pill' + (isReady ? ' ready' : '') + '">' +
               '<span class="pill-dot-wrap">' +
@@ -950,8 +1281,8 @@
           '<div class="d-topbar">' +
             '<div><div class="d-title">' + (curWs ? esc(curWs.name) + ' 總覽' : '潛水艇總覽') + '</div><div class="d-subtitle">' +
               (curWs
-                ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + svgServer() + esc(curWs.server || '未設定伺服器') + '</span><span style="margin:0 6px;color:var(--text-faint);">·</span>' + esc(curWs.captain || '未設定代表角色') + '<span style="margin:0 6px;color:var(--text-faint);">·</span>依返航時間排序'
-                : '依返航時間由近到遠排序，跨工坊一次看') +
+                ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + svgServer() + esc(curWs.server || '未設定伺服器') + '</span><span style="margin:0 6px;color:var(--text-faint);">·</span>' + esc(curWs.captain || '未設定代表角色') + '<span style="margin:0 6px;color:var(--text-faint);">·</span>依返航時間排序・點潛艇可快速修改'
+                : '依返航時間由近到遠排序，跨工坊一次看・點潛艇可快速修改') +
             '</div></div>' +
             '<div class="d-pager">' +
               '<button class="d-pager-btn" data-action="ws-prev">' + svgChevronLeft() + '</button>' +
@@ -964,17 +1295,17 @@
                 '<button class="icon-btn' + (state.view === 'list' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-list" aria-label="切換為表格檢視">' + svgListIcon() + '</button>' +
                 '<button class="icon-btn' + (state.view === 'card' ? ' active' : '') + '" style="width:30px;height:30px" data-action="view-card" aria-label="切換為卡片檢視">' + svgGridIcon() + '</button>' +
               '</div>' +
-              '<button class="upload-cta" data-action="nav-upload">' + svgUpload() + '上傳截圖</button>' +
+              '<button class="upload-cta" data-action="nav-upload">' + svgUpload() + '更新潛艇</button>' +
             '</div>' +
           '</div>' +
           '<div class="d-stats">' +
             '<div class="d-stat"><div class="num mono">' + WORKSHOPS.length + '</div><div class="label">工坊</div></div>' +
             '<div class="d-stat"><div class="num mono">' + RAW.length + '</div><div class="label">潛水艇</div></div>' +
             '<div class="d-stat ready"><div class="num mono">' + RAW.filter(function (r) { return r.status === 'ready'; }).length + '</div><div class="label">艘待收艇</div></div>' +
-            '<div class="d-stat wide"><div style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;">最快返航</div><div style="font-size:15px;font-weight:600;">深海一號 <span style="color:var(--text-dim);font-weight:400;">・貝殼工坊</span></div></div>' +
+            '<div class="d-stat wide"><div style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;">最快返航</div>' + fastestHtml() + '</div>' +
           '</div>' +
           (state.view === 'list'
-            ? '<div class="table-wrap"><div class="table-head"><div></div><div>潛水艇</div><div>工坊</div><div>狀態</div><div>剩餘時間</div><div>預計返航</div></div>' + tableRows + '</div>'
+            ? '<div class="table-wrap"><div class="table-head"><div></div><div>潛水艇</div><div>工坊</div><div>狀態</div><div>剩餘時間</div><div>預計返航</div><div></div></div>' + tableRows + '</div>'
             : '<div class="card-grid">' + cards + '</div>') +
         '</div>' +
       '</div>'
@@ -983,29 +1314,15 @@
 
   // ---------- Desktop upload ----------
   function renderDesktopUpload() {
-    var hasFile = !!state.fileName;
-    var dzClass = 'dropzone' + (state.dragActive ? ' drag' : '') + (hasFile ? ' has-file' : '');
     return (
       '<div class="d-wrap">' +
         desktopSidebar() +
         '<div class="d-main" style="display:flex;flex-direction:column;align-items:center;">' +
           '<div class="d-upload-wrap" style="width:100%;">' +
             '<div class="back-link" data-action="nav-overview">' + svgChevronLeft() + ' 返回總覽</div>' +
-            '<div class="d-title" style="margin-bottom:4px;">上傳截圖</div>' +
-            '<div class="d-subtitle" style="margin-bottom:22px;">支援潛艇管理畫面或情報頁截圖，會自動辨識畫面裡全部潛艇的狀態</div>' +
-            '<div style="margin-bottom:16px;">' +
-              '<label class="field-label">上傳到工坊</label>' +
-              '<select class="field-select" style="width:260px;">' + WORKSHOPS.map(function (w) { return '<option>' + esc(w.name) + '</option>'; }).join('') + '</select>' +
-            '</div>' +
-            '<label class="' + dzClass + '" style="height:260px;" data-role="dropzone-desktop">' +
-              '<input type="file" accept="image/*" data-role="file-input">' +
-              (hasFile
-                ? '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;">' + svgCheck() + '</div><div style="font-size:14px;font-weight:600;">' + esc(state.fileName) + '</div><div style="font-size:12px;color:var(--text-dim);">已選取，準備開始辨識</div></div>'
-                : '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;"><div style="width:52px;height:52px;border-radius:14px;background:rgba(148,163,184,0.08);display:flex;align-items:center;justify-content:center;">' + svgUploadCloud(state.dragActive ? ACCENT : '#6b7594') + '</div><div style="font-size:15px;font-weight:600;">拖放截圖到這裡</div><div style="font-size:12.5px;color:var(--text-dim);">或 <span style="color:' + ACCENT + ';font-weight:600;text-decoration:underline;">瀏覽檔案</span></div><div style="font-size:11px;color:var(--text-faint);margin-top:6px;">支援 PNG／JPG・潛艇管理畫面或情報頁截圖</div></div>') +
-            '</label>' +
-            (hasFile
-              ? '<div style="display:flex;align-items:center;gap:10px;margin-top:16px;"><button class="primary-btn" style="flex-grow:1;">開始辨識</button><button class="ghost-btn" style="width:auto;padding:12px 18px;" data-action="upload-reset">重新選擇</button></div>'
-              : '') +
+            '<div class="d-title" style="margin-bottom:4px;">更新潛艇</div>' +
+            '<div class="d-subtitle" style="margin-bottom:22px;">用截圖辨識或手動輸入，一次更新整個工坊的潛艇狀態</div>' +
+            uploadModeBody(true) +
           '</div>' +
         '</div>' +
       '</div>'
@@ -1063,7 +1380,7 @@
         '<div class="m-nav">' +
           '<div class="nav-item" data-action="nav-overview">' + svgHome() + '<span>總覽</span></div>' +
           '<div class="nav-item active" data-action="nav-workshops">' + svgWorkshops() + '<span>工坊</span></div>' +
-          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>上傳</span></div>' +
+          '<div class="nav-item nav-upload" data-action="nav-upload"><div class="nav-upload-fab">' + svgUpload() + '</div><span>更新</span></div>' +
           '<div class="nav-item" data-action="auth-logout">' + svgUser() + '<span>我的</span></div>' +
         '</div>' +
         copyrightBarMobile() +
@@ -1197,6 +1514,27 @@
       );
     }
 
+    if (state.modal.type === 'quick') {
+      if (!state.uf) return '';
+      var qws = wsById(state.uf.wsId);
+      return (
+        '<div class="modal-overlay" data-action="modal-cancel">' +
+          '<div class="modal-box" data-action="modal-noop">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+              '<div class="modal-title">快速修改</div>' +
+              '<button class="modal-close" data-action="modal-cancel" aria-label="關閉">' + svgClose() + '</button>' +
+            '</div>' +
+            '<div class="uf-ws">' + svgServer() + '<b>' + esc(qws ? qws.name : '') + '</b></div>' +
+            ufRowHtml(state.uf.rows[0], 0, state.uf.errors) +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" data-action="modal-cancel">取消</button>' +
+              '<button class="btn-primary-modal" data-action="update-submit">送出更新</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
     if (state.modal.type === 'delete') {
       var w = WORKSHOPS.filter(function (x) { return x.id === state.modal.id; })[0];
       if (!w) return '';
@@ -1234,7 +1572,8 @@
       extra = '';
     } else {
       if (state.route === 'overview') { mobileHtml = renderMobileOverview(); desktopHtml = renderDesktopOverview(); }
-      else if (state.route === 'upload') { mobileHtml = renderMobileUpload(); desktopHtml = renderDesktopUpload(); }
+      else if (state.route === 'update' && state.uf) { mobileHtml = renderMobileUpdate(); desktopHtml = renderDesktopUpdate(); }
+      else if (state.route === 'upload' || state.route === 'update') { mobileHtml = renderMobileUpload(); desktopHtml = renderDesktopUpload(); }
       else { mobileHtml = renderMobileWorkshops(); desktopHtml = renderDesktopWorkshops(); }
       extra = renderModal();
     }
@@ -1279,9 +1618,26 @@
     else if (action === 'view-card') state.view = 'card';
     else if (action === 'ws-prev') state.wsIndex = (state.wsIndex - 1 + pagerItems().length) % pagerItems().length;
     else if (action === 'ws-next') state.wsIndex = (state.wsIndex + 1) % pagerItems().length;
-    else if (action === 'nav-overview') { state.route = 'overview'; state.modal = null; }
-    else if (action === 'nav-upload') { state.route = 'upload'; state.modal = null; }
-    else if (action === 'nav-workshops') { state.route = 'workshops'; state.modal = null; }
+    else if (action === 'nav-overview') { discardUf(); state.route = 'overview'; state.modal = null; }
+    else if (action === 'nav-upload') { discardUf(); state.route = 'upload'; state.modal = null; }
+    else if (action === 'nav-workshops') { discardUf(); state.route = 'workshops'; state.modal = null; }
+    else if (action === 'up-tab') { state.upTab = el.getAttribute('data-tab') === 'manual' ? 'manual' : 'ocr'; }
+    else if (action === 'ocr-start') { startOcr(); }
+    else if (action === 'manual-start') { if (buildUf('manual')) { state.route = 'update'; startStaleTimer(); } }
+    else if (action === 'update-cancel') { discardUf(); state.route = 'upload'; }
+    else if (action === 'update-submit') { submitUf(); }
+    else if (action === 'quick-edit') { openQuickEdit(el.getAttribute('data-rid')); }
+    else if (action === 'uf-status') {
+      var sr = state.uf && state.uf.rows[parseInt(el.getAttribute('data-idx'), 10)];
+      if (sr) { sr.status = el.getAttribute('data-status') === 'ready' ? 'ready' : 'exploring'; if (sr.status === 'ready') sr.flag = null; delete state.uf.errors[parseInt(el.getAttribute('data-idx'), 10)]; }
+    }
+    else if (action === 'uf-add') {
+      if (state.uf && state.uf.rows.length < MAX_SUBS) { var np = nextFreePos(); state.uf.rows.push(newRow(np, '潛水艇-' + np, 'exploring', null)); state.uf.errors = {}; }
+    }
+    else if (action === 'uf-remove') {
+      var ri = parseInt(el.getAttribute('data-idx'), 10);
+      if (state.uf && state.uf.rows[ri] && state.uf.rows[ri].added) { state.uf.rows.splice(ri, 1); state.uf.errors = {}; }
+    }
     else if (action === 'upload-reset') { state.fileName = null; }
     else if (action === 'ws-manage-toggle') { state.wsManageMode = !state.wsManageMode; }
     else if (action === 'ws-goto') {
@@ -1317,7 +1673,7 @@
     else if (action === 'modal-noop') { return; }
     else if (action === 'copyright-toggle') { state.copyrightExpanded = !state.copyrightExpanded; }
     else if (action === 'copyright-close') { state.copyrightExpanded = false; }
-    else if (action === 'modal-cancel') { state.modal = null; state.modalError = null; }
+    else if (action === 'modal-cancel') { state.modal = null; state.modalError = null; if (state.uf && state.uf.mode === 'quick') discardUf(); }
     else if (action === 'modal-save') {
       var input = document.getElementById('ws-name-input');
       var val = input ? input.value.trim() : '';
@@ -1400,9 +1756,39 @@
   });
 
   document.addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('[data-role="up-ws"]')) {
+      state.upWsId = e.target.value;
+      render();
+      return;
+    }
     if (e.target.matches('[data-role="file-input"]')) {
       var f = e.target.files && e.target.files[0];
       handleFile(f ? f.name : null);
+    }
+  });
+
+  // Update-form inputs: keep values in state without re-rendering (so focus/caret survive typing).
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || !t.getAttribute || !state.uf) return;
+    var f = t.getAttribute('data-uf-field');
+    if (!f) return;
+    var idx = parseInt(t.getAttribute('data-uf-idx'), 10), row = state.uf.rows[idx];
+    if (!row) return;
+    if (f !== 'name') {
+      var clean = t.value.replace(/\D/g, '');
+      if (clean !== t.value) t.value = clean;
+    }
+    row[f] = t.value;
+    if (f === 'm' && row.flag) {
+      row.flag = null;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-uf-flag-el="' + idx + '"]'), function (el) {
+        if (el.classList.contains('uf-flag-msg')) { if (el.parentNode) el.parentNode.removeChild(el); }
+        else { el.classList.remove('flagged'); el.removeAttribute('data-uf-flag-el'); }
+      });
+    }
+    if (f !== 'name') {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-uf-eta="' + idx + '"]'), function (el) { el.textContent = ufEtaText(row); });
     }
   });
 
