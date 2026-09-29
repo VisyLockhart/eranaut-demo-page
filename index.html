@@ -238,8 +238,13 @@
   /* ---------- Workshop management ---------- */
   .ws-browse-item { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); cursor: pointer; }
   .ws-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(45,212,191,0.12); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; color: var(--accent); }
-  .ws-row { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); }
-  .ws-row.dragging { opacity: 0.4; }
+  .ws-row { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg-elevated); border: 1px solid var(--border); }
+  /* Dragged row = dashed "placeholder" that marks exactly where the card will land;
+     the browser's drag image (setDragImage) is the full card following the pointer. */
+  .ws-row.dragging { border: 1px dashed var(--accent); background: rgba(45,212,191,0.08); box-shadow: 0 0 0 3px rgba(45,212,191,0.14); }
+  .ws-row.dragging > * { opacity: 0.22; }
+  .ws-row.dragging::after { content: '放開即放在這裡'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent); pointer-events: none; }
+  body.ws-sorting, body.ws-sorting * { cursor: grabbing !important; }
   .ws-drag-handle { cursor: grab; display: flex; flex: 0 0 auto; }
   .ws-drag-handle:active { cursor: grabbing; }
   .ws-arrows { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
@@ -1232,10 +1237,34 @@
     render();
   }
 
+  // ---------- Row-slide animation (FLIP) for workshop reordering ----------
+  // Rows are keyed by shell (mobile/desktop) + workshop id, because render() outputs both shells.
+  function rowKey(r) { return (r.closest('.desktop-shell') ? 'd' : 'm') + ':' + r.getAttribute('data-id'); }
+  function snapshotRows() {
+    var map = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.ws-row[data-id]'), function (r) {
+      map[rowKey(r)] = r.getBoundingClientRect().top;
+    });
+    return map;
+  }
+  function playFlip(before) {
+    Array.prototype.forEach.call(document.querySelectorAll('.ws-row[data-id]'), function (r) {
+      var prev = before[rowKey(r)];
+      if (prev === undefined || !r.animate) return;
+      var dy = prev - r.getBoundingClientRect().top;
+      if (!dy) return;
+      r.animate(
+        [{ transform: 'translateY(' + dy + 'px)' }, { transform: 'translateY(0)' }],
+        { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)' }
+      );
+    });
+  }
+
   document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-action]');
     if (!el) return;
     var action = el.getAttribute('data-action');
+    var flipBefore = (action === 'ws-move-up' || action === 'ws-move-down') ? snapshotRows() : null;
     if (action === 'view-list') state.view = 'list';
     else if (action === 'view-card') state.view = 'card';
     else if (action === 'ws-prev') state.wsIndex = (state.wsIndex - 1 + pagerItems().length) % pagerItems().length;
@@ -1357,6 +1386,7 @@
     }
     else return;
     render();
+    if (flipBefore) playFlip(flipBefore);
   });
 
   document.addEventListener('change', function (e) {
@@ -1367,58 +1397,95 @@
   });
 
   // ---------- Workshop reorder via drag handle (desktop mouse drag) ----------
-  // Note: the dragged element must stay in the DOM for the browser's native drag
-  // session to keep working, so any re-render triggered from a drag event is
-  // deferred with setTimeout(fn, 0) — rebuilding #app synchronously inside the
-  // event handler (especially 'dragstart') destroys the very node the browser
-  // just started dragging and silently cancels the whole operation.
-  var dragLastOverId = null;
+  // Design notes:
+  // - The dragged row must stay in the DOM for the whole drag session: if the source node is
+  //   destroyed (render() rebuilds all of #app), browsers can cancel the native drag or stop
+  //   delivering 'dragend'. So DURING a drag we never call render(): we move the row's DOM node
+  //   directly and keep WORKSHOPS in sync. One render() runs when the drag finishes, to refresh
+  //   derived UI (e.g. the disabled state of the ▲▼ buttons).
+  // - Visual feedback: the whole card is the drag image (setDragImage), the dragged row turns into
+  //   a dashed accent placeholder that marks where the card will land, and the other rows slide
+  //   into place (FLIP) instead of jumping.
+  var dragLastMoveAt = 0;
+
+  function syncWorkshopsFromDom(container) {
+    var order = Array.prototype.map.call(container.querySelectorAll('.ws-row[data-id]'), function (r) {
+      return r.getAttribute('data-id');
+    });
+    var byId = {};
+    WORKSHOPS.forEach(function (w) { byId[w.id] = w; });
+    var next = order.map(function (id) { return byId[id]; }).filter(Boolean);
+    if (next.length === WORKSHOPS.length) WORKSHOPS = next;
+  }
+
+  function finishWsDrag() {
+    if (state.dragId === null) return;
+    state.dragId = null;
+    document.body.classList.remove('ws-sorting');
+    render();
+  }
 
   document.addEventListener('dragstart', function (e) {
-    var handle = e.target.closest('[data-drag-handle]');
+    var handle = e.target.closest ? e.target.closest('[data-drag-handle]') : null;
     if (!handle) return;
     var row = handle.closest('.ws-row');
     if (!row) return;
     state.dragId = row.getAttribute('data-id');
-    dragLastOverId = null;
-    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', state.dragId); } catch (err) {}
-    setTimeout(render, 0);
+    dragLastMoveAt = 0;
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', state.dragId);
+      if (e.dataTransfer.setDragImage) {
+        var rect = row.getBoundingClientRect();
+        e.dataTransfer.setDragImage(row, e.clientX - rect.left, e.clientY - rect.top);
+      }
+    } catch (err) {}
+    // Apply the placeholder styling only AFTER the browser has snapshotted the drag image,
+    // otherwise the ghost would be captured already faded.
+    setTimeout(function () {
+      if (state.dragId === null) return;
+      row.classList.add('dragging');
+      document.body.classList.add('ws-sorting');
+    }, 0);
   });
 
-  document.addEventListener('dragend', function () {
-    if (state.dragId !== null) {
-      state.dragId = null;
-      dragLastOverId = null;
-      render();
-    }
-  });
+  document.addEventListener('dragend', finishWsDrag);
 
   document.addEventListener('drop', function (e) {
-    var wsRow = e.target.closest('.ws-row[data-id]');
-    if (wsRow && state.dragId !== null) e.preventDefault();
+    if (state.dragId === null) return;
+    e.preventDefault();
+    setTimeout(finishWsDrag, 0);
   });
 
   document.addEventListener('dragover', function (e) {
-    var wsRow = e.target.closest('.ws-row[data-id]');
-    if (wsRow && state.dragId !== null) {
+    if (state.dragId !== null) {
+      // Accept the drop anywhere while sorting (no "forbidden" cursor); only rows trigger a move.
       e.preventDefault();
-      var overId = wsRow.getAttribute('data-id');
-      // Only reorder once per newly-entered row, not on every dragover tick
-      // (dragover fires repeatedly while hovering) — otherwise the constant
-      // splice+re-render churns the DOM under the pointer and the browser
-      // treats that as the drag target moving out from under it, so it looks
-      // "stuck" (dark row, no further movement).
-      if (overId !== state.dragId && overId !== dragLastOverId) {
-        dragLastOverId = overId;
-        var ids = WORKSHOPS.map(function (w) { return w.id; });
-        var fromIdx = ids.indexOf(state.dragId);
-        var toIdx = ids.indexOf(overId);
-        if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
-          var moved = WORKSHOPS.splice(fromIdx, 1)[0];
-          WORKSHOPS.splice(toIdx, 0, moved);
-          setTimeout(render, 0);
-        }
-      }
+      if (e.dataTransfer) { try { e.dataTransfer.dropEffect = 'move'; } catch (err) {} }
+      var target = e.target.closest ? e.target.closest('.ws-row[data-id]') : null;
+      if (!target || target.getAttribute('data-id') === state.dragId) return;
+      var container = target.parentNode;
+      var dragged = null;
+      Array.prototype.forEach.call(container.querySelectorAll('.ws-row[data-id]'), function (r) {
+        if (r.getAttribute('data-id') === state.dragId) dragged = r;
+      });
+      if (!dragged) return;
+      // Let the slide animation settle before re-evaluating; rows are mid-transform until then.
+      var now = Date.now();
+      if (now - dragLastMoveAt < 100) return;
+      var rows = Array.prototype.slice.call(container.querySelectorAll('.ws-row[data-id]'));
+      var fromIdx = rows.indexOf(dragged);
+      var toIdx = rows.indexOf(target);
+      var box = target.getBoundingClientRect();
+      var mid = box.top + box.height / 2;
+      // Dragging downwards: move once the pointer passes the target's midline; upwards: once it is above it.
+      // This hysteresis prevents two rows from swapping back and forth under a still pointer.
+      if (fromIdx < toIdx ? e.clientY <= mid : e.clientY >= mid) return;
+      var before = snapshotRows();
+      container.insertBefore(dragged, fromIdx < toIdx ? target.nextSibling : target);
+      syncWorkshopsFromDom(container);
+      dragLastMoveAt = now;
+      playFlip(before);
       return;
     }
     var dz = e.target.closest('[data-role="dropzone-desktop"]');
