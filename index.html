@@ -138,6 +138,8 @@
 
   .m-nav { flex: 0 0 auto; display: flex; align-items: stretch; border-top: 1px solid var(--border); background: #0a0e1c; }
   .copyright-footer-d { text-align: left; margin-top: 10px; padding: 12px 2px 2px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 9.5px; line-height: 1.6; }
+  /* Author name: a deliberately understated contrasting tint (dim teal) so it reads as a signature, not a highlight. */
+  .copyright-name { color: rgba(45,212,191,0.6); font-weight: 500; }
   .copyright-bar {
     flex: 0 0 auto; padding: 5px 18px 6px; text-align: center; color: var(--text-faint); font-size: 9px;
     background: #0a0e1c; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -245,7 +247,11 @@
   .ws-row.dragging > * { opacity: 0.22; }
   .ws-row.dragging::after { content: '放開即放在這裡'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent); pointer-events: none; }
   body.ws-sorting, body.ws-sorting * { cursor: grabbing !important; }
-  .ws-drag-handle { cursor: grab; display: flex; flex: 0 0 auto; }
+  /* touch-action:none lets a finger on the handle drag instead of scrolling the list; the padding +
+     negative margin enlarge the touch target without changing layout. */
+  .ws-drag-handle { cursor: grab; display: flex; flex: 0 0 auto; touch-action: none; padding: 8px 6px; margin: -8px -6px; }
+  .ws-ghost { position: fixed; z-index: 1000; margin: 0; pointer-events: none; opacity: 0.96; transform: scale(1.02); border-color: var(--accent); box-shadow: 0 14px 32px rgba(0,0,0,0.55); }
+  body.ws-sorting { user-select: none; -webkit-user-select: none; }
   .ws-drag-handle:active { cursor: grabbing; }
   .ws-arrows { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
   .ws-arrow-btn { width: 26px; height: 18px; border-radius: 5px; background: var(--bg-elevated-2); border: 1px solid var(--border-strong); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -452,13 +458,17 @@
     return '<div class="ws-tooltip-bubble">' + svgMapPin() + ' ' + esc(addressLine(w)) + '</div>';
   }
 
-  var COPYRIGHT_LINE = 'Eranaut · Created by Visy Lockhart（Winter@迦樓羅）· FFXIV 繁體中文版';
+  var COPYRIGHT_NAME = 'Winter@迦樓羅';
+  // Returns HTML (the name is wrapped in a tinted span), so callers must NOT esc() the result.
+  function copyrightLineHtml() {
+    return 'Eranaut · Created by <span class="copyright-name">' + esc(COPYRIGHT_NAME) + '</span> · FFXIV 繁體中文版';
+  }
   var COPYRIGHT_DISCLAIMER = '非官方粉絲工具，與 SQUARE ENIX CO., LTD. 無關，僅供社群內部使用，不得用於商業用途。';
 
   function copyrightFooterDesktop() {
     return (
       '<div class="copyright-footer-d">' +
-        '<div>' + COPYRIGHT_LINE + '</div>' +
+        '<div>' + copyrightLineHtml() + '</div>' +
         '<div>' + COPYRIGHT_DISCLAIMER + '</div>' +
       '</div>'
     );
@@ -468,7 +478,7 @@
   // an overlay with the full notice. Kept out of the scrollable list/card
   // area entirely so it never depends on scroll position.
   function copyrightBarMobile() {
-    return '<div class="copyright-bar" data-action="copyright-toggle">' + esc(COPYRIGHT_LINE) + '</div>';
+    return '<div class="copyright-bar" data-action="copyright-toggle">' + copyrightLineHtml() + '</div>';
   }
 
   function copyrightOverlayMobile() {
@@ -480,7 +490,7 @@
             '<div style="font-size:14px;font-weight:700;">關於 Eranaut</div>' +
             '<button class="modal-close" data-action="copyright-close" aria-label="關閉">' + svgClose() + '</button>' +
           '</div>' +
-          '<div style="font-size:12.5px;color:var(--text-muted);line-height:1.7;">' + esc(COPYRIGHT_LINE) + '</div>' +
+          '<div style="font-size:12.5px;color:var(--text-muted);line-height:1.7;">' + copyrightLineHtml() + '</div>' +
           '<div style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-top:8px;">' + COPYRIGHT_DISCLAIMER + '</div>' +
         '</div>' +
       '</div>'
@@ -1407,6 +1417,35 @@
   //   a dashed accent placeholder that marks where the card will land, and the other rows slide
   //   into place (FLIP) instead of jumping.
   var dragLastMoveAt = 0;
+  var lastPointerType = 'mouse'; // 'mouse' uses native HTML5 drag & drop; 'touch'/'pen' use the Pointer Events path below
+  var touchDrag = null;          // { row, ghost, offsetY, pointerId } while a finger is dragging a row
+
+  // Shared by the mouse (dragover) and touch (pointermove) paths: move the dragged row next to `target`
+  // once the pointer crosses target's midline, with FLIP animation and a 100ms throttle.
+  function tryReorder(target, clientY) {
+    var container = target.parentNode;
+    var dragged = null;
+    Array.prototype.forEach.call(container.querySelectorAll('.ws-row[data-id]'), function (r) {
+      if (r.getAttribute('data-id') === state.dragId) dragged = r;
+    });
+    if (!dragged || dragged === target) return;
+    // Let the slide animation settle before re-evaluating; rows are mid-transform until then.
+    var now = Date.now();
+    if (now - dragLastMoveAt < 100) return;
+    var rows = Array.prototype.slice.call(container.querySelectorAll('.ws-row[data-id]'));
+    var fromIdx = rows.indexOf(dragged);
+    var toIdx = rows.indexOf(target);
+    var box = target.getBoundingClientRect();
+    var mid = box.top + box.height / 2;
+    // Dragging downwards: move once the pointer passes the target's midline; upwards: once it is above it.
+    // This hysteresis prevents two rows from swapping back and forth under a still pointer.
+    if (fromIdx < toIdx ? clientY <= mid : clientY >= mid) return;
+    var before = snapshotRows();
+    container.insertBefore(dragged, fromIdx < toIdx ? target.nextSibling : target);
+    syncWorkshopsFromDom(container);
+    dragLastMoveAt = now;
+    playFlip(before);
+  }
 
   function syncWorkshopsFromDom(container) {
     var order = Array.prototype.map.call(container.querySelectorAll('.ws-row[data-id]'), function (r) {
@@ -1428,6 +1467,8 @@
   document.addEventListener('dragstart', function (e) {
     var handle = e.target.closest ? e.target.closest('[data-drag-handle]') : null;
     if (!handle) return;
+    // Touch/pen drags are handled by the Pointer Events path; suppress the browser's long-press native drag.
+    if (lastPointerType !== 'mouse') { e.preventDefault(); return; }
     var row = handle.closest('.ws-row');
     if (!row) return;
     state.dragId = row.getAttribute('data-id');
@@ -1457,6 +1498,52 @@
     setTimeout(finishWsDrag, 0);
   });
 
+  // ---- Touch / pen drag (Pointer Events). Mouse keeps native HTML5 DnD above. ----
+  // Same visuals and same tryReorder(): the row becomes the dashed placeholder, a floating clone follows
+  // the finger, other rows slide. Only the drag handle has touch-action:none, so the rest of the list
+  // still scrolls normally.
+  document.addEventListener('pointerdown', function (e) {
+    lastPointerType = e.pointerType || 'mouse';
+    if (lastPointerType === 'mouse') return;
+    var handle = e.target.closest ? e.target.closest('[data-drag-handle]') : null;
+    if (!handle) return;
+    var row = handle.closest('.ws-row');
+    if (!row || touchDrag) return;
+    var rect = row.getBoundingClientRect();
+    var ghost = row.cloneNode(true);
+    ghost.removeAttribute('data-id'); // keep the clone out of the '.ws-row[data-id]' queries
+    ghost.classList.add('ws-ghost');
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    document.body.appendChild(ghost);
+    state.dragId = row.getAttribute('data-id');
+    dragLastMoveAt = 0;
+    row.classList.add('dragging');
+    document.body.classList.add('ws-sorting');
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+    touchDrag = { row: row, ghost: ghost, offsetY: e.clientY - rect.top, pointerId: e.pointerId };
+  });
+
+  document.addEventListener('pointermove', function (e) {
+    if (!touchDrag || e.pointerId !== touchDrag.pointerId) return;
+    touchDrag.ghost.style.top = (e.clientY - touchDrag.offsetY) + 'px';
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var target = el && el.closest ? el.closest('.ws-row[data-id]') : null;
+    if (target && target.getAttribute('data-id') !== state.dragId && target.parentNode === touchDrag.row.parentNode) {
+      tryReorder(target, e.clientY);
+    }
+  });
+
+  function endTouchDrag(e) {
+    if (!touchDrag || (e && e.pointerId !== touchDrag.pointerId)) return;
+    if (touchDrag.ghost.parentNode) touchDrag.ghost.parentNode.removeChild(touchDrag.ghost);
+    touchDrag = null;
+    finishWsDrag();
+  }
+  document.addEventListener('pointerup', endTouchDrag);
+  document.addEventListener('pointercancel', endTouchDrag);
+
   document.addEventListener('dragover', function (e) {
     if (state.dragId !== null) {
       // Accept the drop anywhere while sorting (no "forbidden" cursor); only rows trigger a move.
@@ -1464,28 +1551,7 @@
       if (e.dataTransfer) { try { e.dataTransfer.dropEffect = 'move'; } catch (err) {} }
       var target = e.target.closest ? e.target.closest('.ws-row[data-id]') : null;
       if (!target || target.getAttribute('data-id') === state.dragId) return;
-      var container = target.parentNode;
-      var dragged = null;
-      Array.prototype.forEach.call(container.querySelectorAll('.ws-row[data-id]'), function (r) {
-        if (r.getAttribute('data-id') === state.dragId) dragged = r;
-      });
-      if (!dragged) return;
-      // Let the slide animation settle before re-evaluating; rows are mid-transform until then.
-      var now = Date.now();
-      if (now - dragLastMoveAt < 100) return;
-      var rows = Array.prototype.slice.call(container.querySelectorAll('.ws-row[data-id]'));
-      var fromIdx = rows.indexOf(dragged);
-      var toIdx = rows.indexOf(target);
-      var box = target.getBoundingClientRect();
-      var mid = box.top + box.height / 2;
-      // Dragging downwards: move once the pointer passes the target's midline; upwards: once it is above it.
-      // This hysteresis prevents two rows from swapping back and forth under a still pointer.
-      if (fromIdx < toIdx ? e.clientY <= mid : e.clientY >= mid) return;
-      var before = snapshotRows();
-      container.insertBefore(dragged, fromIdx < toIdx ? target.nextSibling : target);
-      syncWorkshopsFromDom(container);
-      dragLastMoveAt = now;
-      playFlip(before);
+      tryReorder(target, e.clientY);
       return;
     }
     var dz = e.target.closest('[data-role="dropzone-desktop"]');
