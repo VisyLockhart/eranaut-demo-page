@@ -8,7 +8,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   const dom = await JSDOM.fromFile(path.join(__dirname, '..', 'index.html'), {
     runScripts: 'dangerously', pretendToBeVisual: true,
-    beforeParse(w) { w.ERANAUT_OCR_MS = 30; w.ERANAUT_STALE_MS = 120; }
+    beforeParse(w) { w.ERANAUT_OCR_MS = 30; w.ERANAUT_MIN_MS = 100; w.ERANAUT_TICK_MS = 10; }
   });
   const { window } = dom; const { document } = window;
   const errors = []; window.addEventListener('error', (e) => errors.push(e.message));
@@ -82,10 +82,28 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   ok(flagRow.getAttribute('data-uf-row') === '1', 'flag on row 2 (exploring)');
   type(document.querySelector(M + '.uf-num.flagged input'), '9');
   ok(document.querySelectorAll(M + '.uf-flag-msg, ' + M + '.uf-num.flagged').length === 0, 'flag cleared after editing minutes');
-  console.log('stale hint');
-  await sleep(200);
-  ok(!!document.querySelector(M + '.uf-stale'), 'stale banner appears');
-  ok(document.querySelector(M + '.uf-row[data-uf-row="1"] [data-uf-field="m"]').value === '9', 'stale banner did not touch numbers');
+  console.log('D-124 per-minute compensation (1 minute = 100ms in test)');
+  const f0 = (r, f) => document.querySelector(M + '.uf-row[data-uf-row="' + r + '"] [data-uf-field="' + f + '"]');
+  const minsOf = (r) => (+f0(r, 'd').value) * 1440 + (+f0(r, 'h').value) * 60 + (+f0(r, 'm').value);
+  // row 1 is being edited (typed 9 in minutes, field not left) -> paused; row 0 keeps compensating
+  const before0 = minsOf(0);
+  await sleep(260);
+  ok(minsOf(0) <= before0 - 2, 'untouched row compensated by elapsed minutes (' + before0 + ' -> ' + minsOf(0) + ')');
+  ok(f0(1, 'm').value === '9', 'row being edited is paused (value untouched)');
+  ok(document.querySelector('.desktop-shell .uf-row[data-uf-row="0"] [data-uf-field="m"]').value === f0(0, 'm').value, 'compensation updates the desktop copy too (both shells live in the DOM)');
+  ok(!!document.querySelector(M + '.uf-comp'), 'compensation hint shown');
+  ok(/已依等待時間自動補正 \d+ 分鐘/.test(document.querySelector(M + '.uf-comp').textContent), 'hint text');
+  // leaving the field resumes compensation from the current value
+  const fm = f0(1, 'm'); fm.dispatchEvent(new window.FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+  await sleep(230);
+  ok(minsOf(1) < 2 * 60 + 9, 'edited row resumes compensating after leaving the field (' + minsOf(1) + ')');
+  // a row reaching 0 voids the data with a notice
+  type(f0(0, 'd'), '0'); type(f0(0, 'h'), '0'); type(f0(0, 'm'), '1');
+  f0(0, 'm').dispatchEvent(new window.FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+  await sleep(300);
+  ok(!!document.querySelector(M + '.up-tabs') && !document.querySelector(M + '.uf-row'), 'row reaching 0 voids the form and returns to upload');
+  ok([...document.querySelectorAll('.toast')].some((e) => /作廢/.test(e.textContent)), 'void notice shown');
+  click(M + '[data-action="up-tab"][data-tab="manual"]'); click(M + '[data-action="manual-start"]');
   click(M + '[data-action="update-cancel"]');
   ok(!!document.querySelector(M + '.up-tabs'), 'cancel returns to upload page');
 

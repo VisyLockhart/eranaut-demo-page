@@ -3,7 +3,7 @@
   "private": true,
   "description": "Eranaut demo prototype (static index.html) — dev-only test tooling",
   "scripts": {
-    "test": "node tests/smoke_drag_feedback.js && node tests/smoke_update_flow.js",
+    "test": "node tests/smoke_drag_feedback.js && node tests/smoke_update_flow.js && node tests/smoke_auth_screens.js && node tests/unit_compensation.js",
     "test:browser": "node tests/real_browser_drag.js && node tests/real_browser_touch.js && node tests/real_browser_update.js"
   },
   "devDependencies": {

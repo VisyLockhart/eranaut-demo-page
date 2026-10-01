@@ -333,7 +333,7 @@
   .uf-ws { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .uf-ws b { color: var(--text); }
   .uf-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
-  .uf-stale { display: flex; gap: 8px; padding: 11px 13px; margin-bottom: 14px; border-radius: 11px; background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.35); color: #f0c869; font-size: 12.5px; line-height: 1.6; }
+  .uf-comp { display: flex; gap: 8px; padding: 11px 13px; margin-bottom: 14px; border-radius: 11px; background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.35); color: #f0c869; font-size: 12.5px; line-height: 1.6; }
   .uf-row { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
   .uf-row.ready { border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.05); }
   .uf-row.has-err { border-color: var(--danger); }
@@ -468,21 +468,24 @@
     modal: null,          // null | {type:'form', id:string|null, draft?:string} | {type:'delete', id:string}
     modalError: null,
     dragId: null,          // id of the workshop currently being drag-reordered (desktop mouse drag)
-    authState: 'authenticated', // 'authenticated' | 'landing' | 'processing' | 'denied' | 'expired'
+    authState: 'authenticated', // 'authenticated' | 'landing' | 'processing' | 'denied' | 'not_in_guild' | 'no_role' | 'expired'
     devOpen: false,
     copyrightExpanded: false,
     upTab: 'ocr',          // 'ocr' | 'manual'
     upWsId: null,
     ocrBusy: false,
-    uf: null               // update form: {mode:'ocr'|'manual'|'quick', wsId, rows:[...], errors:{}, stale:bool}
+    uf: null               // update form: {mode:'ocr'|'manual'|'quick', wsId, rows:[...], errors:{}, compMin:number}
   };
   var authTimer = null;
+  var GUILD_NAME = 'XX'; // demo 佔位:正式版取自 .env 的伺服器顯示名稱 (D-123)
 
   var AUTH_STATE_LABELS = {
     authenticated: '已登入（總覽）',
     landing: '① 未登入迎賓頁',
     processing: '② OAuth 處理中',
     denied: '③ 授權被拒／取消',
+    not_in_guild: '③b 不在伺服器',
+    no_role: '③c 沒有資格身份組',
     expired: '④ Session 過期'
   };
 
@@ -771,27 +774,35 @@
     );
   }
 
-  function renderAuthDeniedMobile() {
+  // 登入失敗畫面:文案依 login_error 代碼 (D-142 / D-143 ⑥);不放「請聯絡伺服器管理員」(D-123)
+  function authFailCopy(kind) {
+    if (kind === 'not_in_guild') return { title: '你還不是 ' + GUILD_NAME + ' 的成員', desc: '這個工具只提供給 ' + GUILD_NAME + ' 伺服器的成員使用，而你的 Discord 帳號目前不在該伺服器內。' };
+    if (kind === 'no_role') return { title: '尚未具備使用資格', desc: '你已在 ' + GUILD_NAME + ' 伺服器內，但帳號目前沒有使用這個工具所需的身份組。' };
+    return { title: '登入未完成', desc: '你取消了 Discord 授權。如果改變主意，隨時可以重新登入。' };
+  }
+  function renderAuthFailMobile(kind) {
+    var c = authFailCopy(kind);
     return (
       '<div class="mobile-shell">' +
         '<div class="auth-page-m centered">' +
           '<div class="auth-card">' +
             '<div class="auth-card-icon">' + svgCancelNeutral() + '</div>' +
-            '<div class="auth-card-title">登入未完成</div>' +
-            '<div class="auth-card-desc">你取消了 Discord 授權。如果改變主意，隨時可以重新登入。</div>' +
+            '<div class="auth-card-title">' + esc(c.title) + '</div>' +
+            '<div class="auth-card-desc">' + esc(c.desc) + '</div>' +
             '<button class="auth-card-btn" data-action="auth-retry">重新嘗試登入</button>' +
           '</div>' +
         '</div>' +
       '</div>'
     );
   }
-  function renderAuthDeniedDesktop() {
+  function renderAuthFailDesktop(kind) {
+    var c = authFailCopy(kind);
     return (
       '<div class="auth-page-d" style="justify-content:center;">' +
         '<div class="auth-card" style="max-width:480px;padding:48px;">' +
           '<div class="auth-card-icon" style="width:72px;height:72px;border-radius:18px;margin-bottom:26px;">' + svgCancelNeutral() + '</div>' +
-          '<div class="auth-card-title" style="font-size:20px;">登入未完成</div>' +
-          '<div class="auth-card-desc" style="font-size:14px;margin-bottom:32px;">你取消了 Discord 授權。如果改變主意，隨時可以重新登入。</div>' +
+          '<div class="auth-card-title" style="font-size:20px;">' + esc(c.title) + '</div>' +
+          '<div class="auth-card-desc" style="font-size:14px;margin-bottom:32px;">' + esc(c.desc) + '</div>' +
           '<button class="auth-card-btn" style="padding:14px;font-size:14.5px;" data-action="auth-retry">重新嘗試登入</button>' +
         '</div>' +
       '</div>'
@@ -826,7 +837,7 @@
   }
 
   function devPanel() {
-    var order = ['authenticated', 'landing', 'processing', 'denied', 'expired'];
+    var order = ['authenticated', 'landing', 'processing', 'denied', 'not_in_guild', 'no_role', 'expired'];
     var items = order.map(function (key) {
       return '<div class="dev-menu-item' + (state.authState === key ? ' active' : '') + '" data-action="dev-auth" data-state="' + key + '">' + AUTH_STATE_LABELS[key] + '</div>';
     }).join('');
@@ -853,7 +864,7 @@
     { s: 'exploring', d: '1', h: '0', m: '17' }
   ];
   var ocrToken = 0;
-  var staleTimer = null;
+  var compTimer = null;
 
   function wsById(id) { return WORKSHOPS.filter(function (w) { return w.id === id; })[0] || null; }
   function uploadWsId() {
@@ -865,24 +876,89 @@
     return RAW.filter(function (r) { return r.wsName === name; }).sort(function (a, b) { return posNum(a.pos) - posNum(b.pos); });
   }
   function newRow(pos, name, status, rid) {
-    return { pos: pos, name: name, status: status || 'exploring', d: '', h: '', m: '', flag: null, added: !rid, rid: rid || null };
+    return { pos: pos, name: name, status: status || 'exploring', d: '', h: '', m: '', flag: null, added: !rid, rid: rid || null, base: null, startedAt: 0, paused: false };
   }
   function discardUf() {
-    if (staleTimer) { clearTimeout(staleTimer); staleTimer = null; }
+    stopCompTimer();
     state.uf = null; state.ocrBusy = false; ocrToken++;
   }
-  function startStaleTimer() {
-    if (staleTimer) clearTimeout(staleTimer);
-    var ms = window.ERANAUT_STALE_MS || 180000;
-    staleTimer = setTimeout(function () {
-      staleTimer = null;
-      if (!state.uf || state.uf.mode === 'quick') return;
-      state.uf.stale = true;
-      Array.prototype.forEach.call(document.querySelectorAll('[data-uf-stale-slot]'), function (el) { el.innerHTML = staleBannerHtml(); });
-    }, ms);
+  // ---------- D-124 等待時間補正:純函式區塊(不碰 DOM、不讀時鐘,時間由呼叫端傳入) ----------
+  // 規格:以「每列起算時間戳」計算(now - startedAt),不累加計數;畫面數值每滿 1 分鐘減 1;
+  // 送出時不足一分鐘的零頭再多扣 1 分鐘(進位);任一列歸零 → 資料作廢。API 端不補正(D-48)。
+  // 正式版(Angular)可原樣搬成 TS 工具函式,表格式測試見 tests/unit_compensation.js。
+  var EranautComp = {
+    MINUTE_MS: 60000,
+    // 畫面上顯示的剩餘分鐘:base 為起算當下的剩餘分鐘,startedAt 為起算時間戳
+    displayMinutes: function (base, startedAt, now, minuteMs) {
+      var u = minuteMs || EranautComp.MINUTE_MS;
+      return base - Math.floor(Math.max(0, now - startedAt) / u);
+    },
+    // 送出時使用的剩餘分鐘(零頭進位多扣 1 分鐘)
+    submitMinutes: function (base, startedAt, now, minuteMs) {
+      var u = minuteMs || EranautComp.MINUTE_MS;
+      return base - Math.ceil(Math.max(0, now - startedAt) / u);
+    },
+    // 已補正幾分鐘(給提示用)
+    compensated: function (startedAt, now, minuteMs) {
+      var u = minuteMs || EranautComp.MINUTE_MS;
+      return Math.floor(Math.max(0, now - startedAt) / u);
+    },
+    toParts: function (mins) {
+      return { d: Math.floor(mins / 1440), h: Math.floor((mins % 1440) / 60), m: mins % 60 };
+    }
+  };
+  window.EranautComp = EranautComp;
+
+  // ---------- D-124 前端接線(Angular 版會改寫這一段) ----------
+  function compMinuteMs() { return window.ERANAUT_MIN_MS || EranautComp.MINUTE_MS; }
+  function stopCompTimer() { if (compTimer) { clearInterval(compTimer); compTimer = null; } }
+  function startCompTimer() {
+    stopCompTimer();
+    compTimer = setInterval(compTick, window.ERANAUT_TICK_MS || 1000);
   }
-  function staleBannerHtml() {
-    return '<div class="uf-stale"><span>⏱</span><span>你停留在這個畫面一陣子了，還沒送出。剩餘時間會以「按下送出的那一刻」起算，我們不會自動幫你修正數字——如果離截圖／遊戲畫面已經過了一段時間，建議先對照遊戲再送出。</span></div>';
+  // 每列起算:以目前畫面上的數值為基準(有填完才有基準)
+  function rebaseRow(row, now) {
+    var m = row.status === 'exploring' ? ufMins(row) : null;
+    row.base = (m !== null && m > 0) ? m : null;
+    row.startedAt = now;
+  }
+  function voidUfForTimeout() {
+    discardUf();
+    state.modal = null;
+    state.route = 'upload';
+    render();
+    showToast('等待時間過久，剩餘時間已扣到 0，這次的資料已作廢，請重新上傳或輸入');
+  }
+  function compTick() {
+    var uf = state.uf;
+    if (!uf || uf.mode === 'quick') { stopCompTimer(); return; }
+    var now = Date.now(), u = compMinuteMs(), maxComp = 0;
+    for (var i = 0; i < uf.rows.length; i++) {
+      var row = uf.rows[i];
+      if (row.status !== 'exploring' || row.base == null || row.paused) continue;
+      var cur = EranautComp.displayMinutes(row.base, row.startedAt, now, u);
+      if (cur <= 0) { voidUfForTimeout(); return; }
+      maxComp = Math.max(maxComp, EranautComp.compensated(row.startedAt, now, u));
+      var p = EranautComp.toParts(cur);
+      if (String(p.d) !== row.d || String(p.h) !== row.h || String(p.m) !== row.m) {
+        row.d = String(p.d); row.h = String(p.h); row.m = String(p.m);
+        ['d', 'h', 'm'].forEach(function (f) {
+          // 手機與桌機兩份畫面都在 DOM 裡,兩份都要更新
+          Array.prototype.forEach.call(document.querySelectorAll('[data-uf-row="' + i + '"] [data-uf-field="' + f + '"]'), function (inp) {
+            if (inp.value !== row[f]) inp.value = row[f];
+          });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-uf-eta="' + i + '"]'), function (el) { el.textContent = ufEtaText(row); });
+      }
+    }
+    if (maxComp !== uf.compMin) {
+      uf.compMin = maxComp;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-uf-comp-slot]'), function (el) { el.innerHTML = compHintHtml(); });
+    }
+  }
+  function compHintHtml() {
+    if (!state.uf || !state.uf.compMin) return '';
+    return '<div class="uf-comp"><span>⏱</span><span>已依等待時間自動補正 ' + state.uf.compMin + ' 分鐘。如果你正在修改某一艘，那一艘會先暫停補正；你的修改一律優先。</span></div>';
   }
   function buildUf(mode) {
     var wsId = uploadWsId(), ws = wsById(wsId);
@@ -904,7 +980,9 @@
       subs.forEach(function (sb) { rows.push(newRow(posNum(sb.pos), sb.sub, sb.status, sb.rid)); });
       if (!rows.length) rows.push(newRow(1, '潛水艇-1', 'exploring', null));
     }
-    state.uf = { mode: mode, wsId: wsId, rows: rows, errors: {}, stale: false };
+    var t0 = Date.now();
+    rows.forEach(function (r) { rebaseRow(r, t0); });
+    state.uf = { mode: mode, wsId: wsId, rows: rows, errors: {}, compMin: 0 };
     return true;
   }
   function startOcr() {
@@ -914,7 +992,7 @@
     setTimeout(function () {
       if (tok !== ocrToken || !state.ocrBusy) return;
       state.ocrBusy = false;
-      if (buildUf('ocr')) { state.route = 'update'; startStaleTimer(); }
+      if (buildUf('ocr')) { state.route = 'update'; startCompTimer(); }
       render();
     }, typeof window.ERANAUT_OCR_MS === 'number' ? window.ERANAUT_OCR_MS : 1400);
   }
@@ -955,8 +1033,19 @@
     var ws = wsById(state.uf.wsId);
     if (!ws) return false;
     var now = Date.now(), count = state.uf.rows.length;
+    // D-124:送出當下,仍在補正中的列把不足一分鐘的零頭再多扣 1 分鐘;任一列歸零 → 作廢
+    if (state.uf.mode !== 'quick') {
+      var voided = state.uf.rows.some(function (row) {
+        return row.status === 'exploring' && row.base != null && !row.paused &&
+          EranautComp.submitMinutes(row.base, row.startedAt, now, compMinuteMs()) <= 0;
+      });
+      if (voided) { voidUfForTimeout(); return false; }
+    }
     state.uf.rows.forEach(function (row) {
       var mins = row.status === 'ready' ? 0 : ufMins(row);
+      if (row.status === 'exploring' && state.uf.mode !== 'quick' && row.base != null && !row.paused) {
+        mins = EranautComp.submitMinutes(row.base, row.startedAt, now, compMinuteMs());
+      }
       var disp = buildDisplay(row.status, mins, now);
       var item = row.rid ? RAW.filter(function (r) { return r.rid === row.rid; })[0] : null;
       if (!item) {
@@ -981,7 +1070,7 @@
     if (!item) return;
     var ws = wsByName(item.wsName);
     if (!ws) return;
-    state.uf = { mode: 'quick', wsId: ws.id, rows: [newRow(posNum(item.pos), item.sub, item.status, item.rid)], errors: {}, stale: false };
+    state.uf = { mode: 'quick', wsId: ws.id, rows: [newRow(posNum(item.pos), item.sub, item.status, item.rid)], errors: {}, compMin: 0 };
     state.modal = { type: 'quick' };
   }
 
@@ -1020,7 +1109,7 @@
     return (
       '<div class="uf-ws">' + svgServer() + '<b>' + esc(ws ? ws.name : '') + '</b>' + (ws ? wsMetaLine(ws.name) : '') + '</div>' +
       '<div class="uf-note">' + note + '</div>' +
-      '<div data-uf-stale-slot>' + (uf.stale ? staleBannerHtml() : '') + '</div>' +
+      '<div data-uf-comp-slot>' + compHintHtml() + '</div>' +
       rows +
       (uf.rows.length < MAX_SUBS ? '<button class="uf-add" data-action="uf-add">＋ 加入第 ' + nextFreePos() + ' 艘</button>' : '')
     );
@@ -1462,7 +1551,7 @@
         detail: current && current.address ? current.address.detail : '',
         notifyBatched: current ? !!current.notifyBatched : false
       };
-      var nameError = state.modalError === '請輸入工坊名稱' || state.modalError === '此名稱已存在';
+      var nameError = state.modalError === '請輸入工坊名稱';
       var serverError = state.modalError === '請選擇遊戲伺服器';
       return (
         '<div class="modal-overlay" data-action="modal-cancel">' +
@@ -1475,7 +1564,7 @@
             '<input type="text" id="ws-name-input" class="modal-input' + (nameError ? ' error' : '') + '" value="' + esc(d.name) + '" maxlength="20">' +
             (nameError
               ? '<div class="modal-error-text">' + esc(state.modalError) + '</div>'
-              : '<div class="modal-hint">填公會正式名稱，或自己取一個好記的別名——用來在潛艇列表裡辨識這是哪個公會的紀錄，同一份清單裡不要重複比較好分辨</div>') +
+              : '<div class="modal-hint">填公會正式名稱，或自己取一個好記的別名——用來在潛艇列表裡辨識這是哪個公會的紀錄</div>') +
 
             '<div class="modal-section-label">遊戲身分</div>' +
             '<div class="modal-field-row">' +
@@ -1567,7 +1656,7 @@
     if (state.authState !== 'authenticated') {
       if (state.authState === 'landing') { mobileHtml = renderAuthLandingMobile(); desktopHtml = renderAuthLandingDesktop(); }
       else if (state.authState === 'processing') { mobileHtml = renderAuthProcessingMobile(); desktopHtml = renderAuthProcessingDesktop(); }
-      else if (state.authState === 'denied') { mobileHtml = renderAuthDeniedMobile(); desktopHtml = renderAuthDeniedDesktop(); }
+      else if (state.authState === 'denied' || state.authState === 'not_in_guild' || state.authState === 'no_role') { mobileHtml = renderAuthFailMobile(state.authState); desktopHtml = renderAuthFailDesktop(state.authState); }
       else { mobileHtml = renderAuthExpiredMobile(); desktopHtml = renderAuthExpiredDesktop(); }
       extra = '';
     } else {
@@ -1623,13 +1712,13 @@
     else if (action === 'nav-workshops') { discardUf(); state.route = 'workshops'; state.modal = null; }
     else if (action === 'up-tab') { state.upTab = el.getAttribute('data-tab') === 'manual' ? 'manual' : 'ocr'; }
     else if (action === 'ocr-start') { startOcr(); }
-    else if (action === 'manual-start') { if (buildUf('manual')) { state.route = 'update'; startStaleTimer(); } }
+    else if (action === 'manual-start') { if (buildUf('manual')) { state.route = 'update'; startCompTimer(); } }
     else if (action === 'update-cancel') { discardUf(); state.route = 'upload'; }
     else if (action === 'update-submit') { submitUf(); }
     else if (action === 'quick-edit') { openQuickEdit(el.getAttribute('data-rid')); }
     else if (action === 'uf-status') {
       var sr = state.uf && state.uf.rows[parseInt(el.getAttribute('data-idx'), 10)];
-      if (sr) { sr.status = el.getAttribute('data-status') === 'ready' ? 'ready' : 'exploring'; if (sr.status === 'ready') sr.flag = null; delete state.uf.errors[parseInt(el.getAttribute('data-idx'), 10)]; }
+      if (sr) { sr.status = el.getAttribute('data-status') === 'ready' ? 'ready' : 'exploring'; if (sr.status === 'ready') sr.flag = null; rebaseRow(sr, Date.now()); delete state.uf.errors[parseInt(el.getAttribute('data-idx'), 10)]; }
     }
     else if (action === 'uf-add') {
       if (state.uf && state.uf.rows.length < MAX_SUBS) { var np = nextFreePos(); state.uf.rows.push(newRow(np, '潛水艇-' + np, 'exploring', null)); state.uf.errors = {}; }
@@ -1690,9 +1779,6 @@
       if (!val) {
         state.modal.draft = draft;
         state.modalError = '請輸入工坊名稱';
-      } else if (WORKSHOPS.some(function (w) { return w.name === val && w.id !== editId; })) {
-        state.modal.draft = draft;
-        state.modalError = '此名稱已存在';
       } else if (!draft.server) {
         state.modal.draft = draft;
         state.modalError = '請選擇遊戲伺服器';
@@ -1767,6 +1853,23 @@
     }
   });
 
+  // D-124:正在編輯的那一列暫停補正;離開欄位後以目前的值重新起算
+  function ufRowFromField(t) {
+    if (!t || !t.getAttribute || !state.uf) return null;
+    var f = t.getAttribute('data-uf-field');
+    if (!f || f === 'name') return null;
+    return state.uf.rows[parseInt(t.getAttribute('data-uf-idx'), 10)] || null;
+  }
+  document.addEventListener('focusin', function (e) { var row = ufRowFromField(e.target); if (row) row.paused = true; });
+  document.addEventListener('focusout', function (e) {
+    var row = ufRowFromField(e.target);
+    if (!row) return;
+    var next = e.relatedTarget, same = next && next.getAttribute && next.getAttribute('data-uf-idx') === e.target.getAttribute('data-uf-idx') && next.getAttribute('data-uf-field') !== 'name';
+    if (same) return; // 還在同一列的其他欄位,維持暫停
+    row.paused = false;
+    rebaseRow(row, Date.now());
+  });
+
   // Update-form inputs: keep values in state without re-rendering (so focus/caret survive typing).
   document.addEventListener('input', function (e) {
     var t = e.target;
@@ -1780,6 +1883,7 @@
       if (clean !== t.value) t.value = clean;
     }
     row[f] = t.value;
+    if (f !== 'name') row.paused = true;
     if (f === 'm' && row.flag) {
       row.flag = null;
       Array.prototype.forEach.call(document.querySelectorAll('[data-uf-flag-el="' + idx + '"]'), function (el) {

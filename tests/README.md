@@ -13,7 +13,9 @@ npm run test:browser # 真實 Chromium 驗證(拖曳、觸控、更新流程),�
 | 檔案 | 驗證內容 |
 |---|---|
 | `smoke_drag_feedback.js` | 工坊拖曳排序視覺回饋(佔位框、拖曳中不重繪、FLIP、放開後重繪一次)+ 上傳拖放區 |
-| `smoke_update_flow.js` | 更新潛艇流程:排序、分頁、手動輸入驗證、假 OCR 與可疑欄位、逾時提示、加/移除列、單艘快速修改 |
+| `smoke_update_flow.js` | 更新潛艇流程:排序、分頁、手動輸入驗證、假 OCR 與可疑欄位、D-124 每分鐘補正(編輯列暫停、歸零作廢)、加/移除列、單艘快速修改 |
+| `smoke_auth_screens.js` | 登入失敗畫面(取消授權/不在伺服器/沒有資格身份組)手機與桌機文案與重試 |
+| `unit_compensation.js` | D-124 補正純函式的表格式案例(進位、時間戳計算);案例與實作無關,Angular 版可直接轉用 |
 | `real_browser_drag.js` | 真實 Chromium 滑鼠拖曳排序 |
 | `real_browser_touch.js` | 真實 Chromium 觸控拖曳(CDP `Input.dispatchTouchEvent`)+ 版權署名 |
 | `real_browser_update.js` | 更新潛艇流程手機/桌機截圖與無 script 錯誤檢查 |
